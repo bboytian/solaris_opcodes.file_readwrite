@@ -1,0 +1,5 @@
+Notes
+
+- this package is to be used like a toolbox, with functions for
+  reading various file. At the current state, I do not foresee
+  scripting file reading.
