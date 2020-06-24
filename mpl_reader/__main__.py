@@ -148,8 +148,7 @@ def main(import_d, size2eind_func, size2sind_func):
             eomtimes = pd.to_datetime(list(  # flag timings
                 map(lambda x: x[:MPLEOMTIMEIND],
                     filter(lambda x: MPLEOMFILE[MPLEOMTIMEIND:] in x,
-                           allfiles)
-                )))
+                           allfiles))))
             mplfiles = list(filter(lambda x:MPLFILE[MPLTIMEIND:] in x,
                                    allfiles))
             mplfiles.sort()
