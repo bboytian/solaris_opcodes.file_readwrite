@@ -29,7 +29,7 @@ if __name__ == '__main__':
     date = dt.datetime(2020, 6, 2)
     data_d = DIRCONFN(SOLARISMPLDIR.format(lidarname), DATEFMT.format(date))
     file_dlst = list(filter(
-        lambda x: DIRPARSEFN(MPLFILE, MPLFILEFIELD) in x,
+        lambda x: DIRPARSEFN(MPLFILE, MPLEXTFIELD) in x,
         [DIRCONFN(data_d, fn) for fn in os.listdir(data_d)]
     ))
     file_dlst.sort()

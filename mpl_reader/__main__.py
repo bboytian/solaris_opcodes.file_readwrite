@@ -147,12 +147,12 @@ def main(import_d, size2eind_func, size2sind_func):
             allfiles = np.concatenate(allfiles, axis=0)
             eomtimes = DIRPARSEFN(  # flag timings
                 list(filter(
-                    lambda x: DIRPARSEFN(MPLEOMFILE, MPLEOMFILEFIELD) in x,
+                    lambda x: DIRPARSEFN(MPLEOMFILE, MPLEOMEXTFIELD) in x,
                     allfiles
                 )), MPLEOMTIMEFIELD
             )
             mplfiles = list(filter(
-                lambda x: DIRPARSEFN(MPLFILE, MPLFILEFIELD) in x, allfiles
+                lambda x: DIRPARSEFN(MPLFILE, MPLEXTFIELD) in x, allfiles
             ))
             mplfiles.sort()
             mplfiles = np.array(mplfiles)
