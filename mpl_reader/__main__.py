@@ -22,7 +22,7 @@ def _lstfromtimes_func(times, starttime, endtime, startoff, endoff):
         starttime and (endoff) indexes after endtime
         one index after endtime
     '''
-    times = times.sort_values()
+    times = np.sort(times)
     startind = np.argmax(times > starttime) - 1 - startoff
     if startind < 0:            # starttime is before first time provided
         startind = 0
@@ -144,12 +144,14 @@ def main(import_d, size2eind_func, size2sind_func):
                 for date in dates
             ])
             allfiles = np.concatenate(allfiles, axis=0)
-            eomtimes = pd.to_datetime(list(  # flag timings
-                map(lambda x: x[:MPLEOMTIMEIND],
-                    filter(lambda x: MPLEOMFILE[MPLEOMTIMEIND:] in x,
-                           allfiles))))
-            mplfiles = list(filter(lambda x:MPLFILE[MPLTIMEIND:] in x,
-                                   allfiles))
+            eomtimes = DIRPARSEFN(  # flag timings
+                list(filter(
+                    lambda x: DIRPARSEFN(x, MPLEOMFILEFIELD) in x, allfiles
+                )), MPLEOMTIMEFIELD
+            )
+            mplfiles = list(filter(
+                lambda x: DIRPARSEFN(x, MPLFILEFIELD) in x, allfiles
+            ))
             mplfiles.sort()
             mplfiles = np.array(mplfiles)
 
@@ -159,8 +161,7 @@ def main(import_d, size2eind_func, size2sind_func):
                 eomtimes = _lstfromtimes_func(eomtimes,
                                               starttime, endtime, 0, 1)
                 seomtimes, eeomtimes = eomtimes[:-1], eomtimes[1:]
-                times = pd.to_datetime(list(map(lambda x: x[:MPLTIMEIND],
-                                                mplfiles)))
+                times = DIRPARSEFN(mplfiles, MPLTIMEFIELD)
                 mplsps = []
                 for i, seomtime in enumerate(seomtimes):
                     startind = np.argmax(times > seomtime)
@@ -187,15 +188,16 @@ def main(import_d, size2eind_func, size2sind_func):
             for mplfile in mplsp:
                 print('\t{}'.format(mplfile))
                 with open(osp.join(  # this returns mplfile if arg is specified
-                        SOLARISMPLDIR.format(lidarname),
-                        mplfile[:MPLDATEIND], mplfile
+                        SOLARISMPLDIR.format(lidarname),DATEFMT.format(
+                            pd.Timestamp(DIRPARSEFN(mplfile, MPLTIMEFIELD))
+                        ), mplfile
                 ),'rb') as mplf:
                     byteara += bytearray(mplf.read())
             # convert binary data to numpy array for reshaping
             byteara = np.frombuffer(byteara, dtype=np.byte)
             ## reading channel length from first measurement
             Nbin = np.frombuffer(byteara[Nbinsind:Nbineind],
-                                 dtype = dtype_dic[Nbin_key])[0]
+                                 dtype=dtype_dic[Nbin_key])[0]
             Nbin_arA.append(Nbin)
             bytearA.append(byteara)
         ## editing indices for channels to fit the maxNbbin
