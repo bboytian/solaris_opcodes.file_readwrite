@@ -24,7 +24,7 @@ if __name__ == '__main__':
     import os
     import os.path as osp
 
-    from ..params import *
+    from ..globalimports import *
 
     lidarname = 'mpl_S2S'
     date = dt.datetime(2020, 6, 2)

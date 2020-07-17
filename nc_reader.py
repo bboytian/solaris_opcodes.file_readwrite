@@ -7,7 +7,7 @@ import netCDF4 as nc4
 import numpy as np
 import pandas as pd
 
-from ..params import *
+from ..globalimports import *
 
 
 def main(data_dir, refreshjson_boo=False):

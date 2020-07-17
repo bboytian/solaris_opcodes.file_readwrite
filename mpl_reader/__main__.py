@@ -7,8 +7,7 @@ import os.path as osp
 import numpy as np
 import pandas as pd
 
-from ...decorators import *
-from ...params import *
+from ...globalimports import *
 
 
 # supp func
@@ -107,12 +106,12 @@ def main(import_d, size2eind_func, size2sind_func):
 
         Parameters
             lidarname (str): directory name of lidar
-            mplfiledir (str): non absolute filename of single mpl file, date 
+            mplfiledir (str): non absolute filename of single mpl file, date
                               should be None
             slicetup (slice): slice tuple along time axis, only if mplfiledir
                               is specified
             date (datetime like): if specified, restricts reading to only files
-                                  within this date directory, mplfiledir should 
+                                  within this date directory, mplfiledir should
                                   be None
             start/endtime (datetime like): approx start/end time of data of
                                            interest, specified if mplfiledir
@@ -313,8 +312,7 @@ if __name__ == '__main__':
     from .smmpl_fmt import size2eind_func, size2sind_func
     smmpl_reader = main(import_dic, size2eind_func, size2sind_func)
 
-    from ...decorators import *
-    from ...params import *
+    from ...globalimports import *
 
     testsmmpl_boo = False
     if testsmmpl_boo:
