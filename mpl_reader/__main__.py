@@ -2,7 +2,6 @@
 from copy import deepcopy
 import json
 import os
-import os.path as osp
 
 import numpy as np
 import pandas as pd
@@ -142,7 +141,7 @@ def main(import_d, size2eind_func, size2sind_func):
 
             ## catergorizing files based on flags
             allfiles = np.array([
-                os.listdir(osp.join(SOLARISMPLDIR.format(lidarname), date))
+                os.listdir(DIRCONFN(SOLARISMPLDIR.format(lidarname), date))
                 for date in dates
             ])
             allfiles = np.concatenate(allfiles, axis=0)
@@ -190,7 +189,7 @@ def main(import_d, size2eind_func, size2sind_func):
             for mplfile in mplsp:
                 print('\t{}'.format(mplfile))
                 try:  # returns mplfile if arg is specified
-                    filedir = osp.join(
+                    filedir = DIRCONFN(
                         SOLARISMPLDIR.format(lidarname), DATEFMT.format(
                             pd.Timestamp(DIRPARSEFN(mplfile, MPLTIMEFIELD))
                         ), mplfile

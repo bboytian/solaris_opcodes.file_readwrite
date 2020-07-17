@@ -58,7 +58,7 @@ def main(data_dir, refreshjson_boo=False):
         if refreshjson_boo:     # forcing a refresh of the file
             raise IOError
         else:
-            with open(osp.join(data_dir, JSONFILE)) as json_file:
+            with open(DIRCONFN(data_dir, JSONFILE)) as json_file:
                 ret_ara = json.load(json_file)
                 for dic in ret_ara:
                     # handling time
@@ -79,7 +79,7 @@ def main(data_dir, refreshjson_boo=False):
     except IOError:             # reading files and writing json file
         # iterating through nc files
         ret_ara = []
-        nc_lst = [osp.join(data_dir,nc_file) for nc_file in os.listdir(data_dir)\
+        nc_lst = [DIRCONFN(data_dir,nc_file) for nc_file in os.listdir(data_dir)\
                   if nc_file[-2:] == 'nc']
         nc_lst.sort()
         for nc_file in nc_lst:
@@ -110,7 +110,7 @@ def main(data_dir, refreshjson_boo=False):
 
 
         # writing dictionary to json file
-        with open(osp.join(data_dir, JSONFILE), 'w+') as json_file:
+        with open(DIRCONFN(data_dir, JSONFILE), 'w+') as json_file:
             json.dump(ret_ara, json_file)
 
 
