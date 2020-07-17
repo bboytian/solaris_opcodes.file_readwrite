@@ -23,10 +23,12 @@ def _lstfromtimes_func(times, starttime, endtime, startoff, endoff):
         one index after endtime
     '''
     times = np.sort(times)
-    startind = np.argmax(times > starttime) - 1 - startoff
+    st = TIMEFMT.format(starttime)
+    et = TIMEFMT.format(endtime)
+    startind = np.argmax(times > st) - 1 - startoff
     if startind < 0:            # starttime is before first time provided
         startind = 0
-    endind = np.argmax(times > endtime) + endoff
+    endind = np.argmax(times > et) + endoff
     if endind == endoff:        # endtime is after last time provided
         endind = None
     return times[startind:endind]
@@ -130,31 +132,31 @@ def main(import_d, size2eind_func, size2sind_func):
             if date:
                 dates = [date]
             else:
-                dates = pd.to_datetime(list(
-                    map(lambda x: x[:TIMELEN],
-                        filter(lambda x: x[0] == '2',
-                             os.listdir(SOLARISMPLDIR.format(lidarname))
-                        ))))
+                dates = DIRPARSEFN(
+                    list(filter(
+                        lambda x: DIRPARSEFN(x)[0] == '2',
+                        os.listdir(SOLARISMPLDIR.format(lidarname))
+                    ))
+                )
                 dates = _lstfromtimes_func(dates, starttime, endtime, 1, 1)
 
             ## catergorizing files based on flags
             allfiles = np.array([
-                os.listdir(osp.join(SOLARISMPLDIR.format(lidarname),
-                                    DATEFMT.format(date)))
+                os.listdir(osp.join(SOLARISMPLDIR.format(lidarname), date))
                 for date in dates
             ])
             allfiles = np.concatenate(allfiles, axis=0)
             eomtimes = DIRPARSEFN(  # flag timings
                 list(filter(
-                    lambda x: DIRPARSEFN(x, MPLEOMFILEFIELD) in x, allfiles
+                    lambda x: DIRPARSEFN(MPLEOMFILE, MPLEOMFILEFIELD) in x,
+                    allfiles
                 )), MPLEOMTIMEFIELD
             )
             mplfiles = list(filter(
-                lambda x: DIRPARSEFN(x, MPLFILEFIELD) in x, allfiles
+                lambda x: DIRPARSEFN(MPLFILE, MPLFILEFIELD) in x, allfiles
             ))
             mplfiles.sort()
             mplfiles = np.array(mplfiles)
-
             try:
                 # each ara in lst is scanpat, no need to worry about edge cases
                 # as there are is an excess of mpl flags
@@ -187,11 +189,15 @@ def main(import_d, size2eind_func, size2sind_func):
             byteara = bytearray()
             for mplfile in mplsp:
                 print('\t{}'.format(mplfile))
-                with open(osp.join(  # this returns mplfile if arg is specified
-                        SOLARISMPLDIR.format(lidarname),DATEFMT.format(
+                try:  # returns mplfile if arg is specified
+                    filedir = osp.join(
+                        SOLARISMPLDIR.format(lidarname), DATEFMT.format(
                             pd.Timestamp(DIRPARSEFN(mplfile, MPLTIMEFIELD))
                         ), mplfile
-                ),'rb') as mplf:
+                    )
+                except ValueError:  # single file provided
+                    filedir = mplfile
+                with open(filedir, 'rb') as mplf:
                     byteara += bytearray(mplf.read())
             # convert binary data to numpy array for reshaping
             byteara = np.frombuffer(byteara, dtype=np.byte)
@@ -319,8 +325,8 @@ if __name__ == '__main__':
     testsmmpl_boo = False
     if testsmmpl_boo:
 
-        starttime = pd.Timestamp('202006030000')
-        endtime = pd.Timestamp('202006032359')
+        starttime = pd.Timestamp('202007150000')
+        endtime = pd.Timestamp('202007160000')
         mpldic = smmpl_reader(
             'smmpl_E2',
             starttime=starttime, endtime=endtime,
