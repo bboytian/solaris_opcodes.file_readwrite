@@ -131,29 +131,18 @@ def main(import_d, size2eind_func, size2sind_func):
             if date:
                 dates = [date]
             else:
-                dates = DIRPARSEFN(
-                    list(filter(
-                        lambda x: DIRPARSEFN(x)[0] == '2',
+                dates = list(filter(
+                        lambda x: x[0] == '2',
                         os.listdir(SOLARISMPLDIR.format(lidarname))
                     ))
-                )
                 dates = _lstfromtimes_func(dates, starttime, endtime, 1, 1)
 
             ## catergorizing files based on flags
-            allfiles = np.array([
-                os.listdir(DIRCONFN(SOLARISMPLDIR.format(lidarname), date))
-                for date in dates
-            ])
-            allfiles = np.concatenate(allfiles, axis=0)
-            eomtimes = DIRPARSEFN(  # flag timings
-                list(filter(
-                    lambda x: DIRPARSEFN(MPLEOMFILE, MPLEOMEXTFIELD) in x,
-                    allfiles
-                )), MPLEOMTIMEFIELD
-            )
-            mplfiles = list(filter(
-                lambda x: DIRPARSEFN(MPLFILE, MPLEXTFIELD) in x, allfiles
-            ))
+            datedir_l = [DIRCONFN(SOLARISMPLDIR.format(lidarname), date)
+                         for date in dates]
+            eomtimes = DIRPARSEFN(FINDFILESFN(MPLEOMFILE, datedir_l),
+                                  MPLEOMTIMEFIELD)
+            mplfiles = FINDFILESFN(MPLFILE, datedir_l)
             mplfiles.sort()
             mplfiles = np.array(mplfiles)
             try:
@@ -188,15 +177,7 @@ def main(import_d, size2eind_func, size2sind_func):
             byteara = bytearray()
             for mplfile in mplsp:
                 print('\t{}'.format(mplfile))
-                try:  # returns mplfile if arg is specified
-                    filedir = DIRCONFN(
-                        SOLARISMPLDIR.format(lidarname), DATEFMT.format(
-                            pd.Timestamp(DIRPARSEFN(mplfile, MPLTIMEFIELD))
-                        ), mplfile
-                    )
-                except ValueError:  # single file provided
-                    filedir = mplfile
-                with open(filedir, 'rb') as mplf:
+                with open(mplfile, 'rb') as mplf:
                     byteara += bytearray(mplf.read())
             # convert binary data to numpy array for reshaping
             byteara = np.frombuffer(byteara, dtype=np.byte)
