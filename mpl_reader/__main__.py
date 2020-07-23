@@ -73,7 +73,6 @@ def main(import_d, size2eind_func, size2sind_func):
     def reader_func(
             lidarname,
             mplfiledir=None, slicetup=None,
-            date=None,
             starttime=None, endtime=None,
             filename=None,
     ):
@@ -111,9 +110,6 @@ def main(import_d, size2eind_func, size2sind_func):
                               should be None
             slicetup (slice): slice tuple along time axis, only if mplfiledir
                               is specified
-            date (datetime like): if specified, restricts reading to only files
-                                  within this date directory, mplfiledir should
-                                  be None
             start/endtime (datetime like): approx start/end time of data of
                                            interest, specified if mplfiledir
                                            is None
@@ -128,14 +124,11 @@ def main(import_d, size2eind_func, size2sind_func):
         else:                   # finding files in data archive
             # finding files
             ## listing directories
-            if date:
-                dates = [date]
-            else:
-                dates = list(filter(
-                        lambda x: x[0] == '2',
-                        os.listdir(SOLARISMPLDIR.format(lidarname))
-                    ))
-                dates = _lstfromtimes_func(dates, starttime, endtime, 1, 1)
+            dates = list(filter(
+                    lambda x: x[0] == '2',
+                    os.listdir(SOLARISMPLDIR.format(lidarname))
+                ))
+            dates = _lstfromtimes_func(dates, starttime, endtime, 1, 1)
 
             ## catergorizing files based on flags
             datedir_l = [DIRCONFN(SOLARISMPLDIR.format(lidarname), date)
