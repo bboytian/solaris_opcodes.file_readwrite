@@ -75,6 +75,7 @@ def main(import_d, size2eind_func, size2sind_func):
             mplfiledir=None, slicetup=None,
             starttime=None, endtime=None,
             filename=None,
+            includecurrfileboo=False,
     ):
         '''
         1 shot no. of bytes  = headersize + no. of channels * dtype size * Nbin
@@ -114,6 +115,10 @@ def main(import_d, size2eind_func, size2sind_func):
                                            interest, specified if mplfiledir
                                            is None
             filename (str): output will be a json file format, if specified
+            includecurrfileboo (boolean): decides whether or not to include files
+                                          after the last eomtime. This is meant
+                                          to be used only if we want to read the
+                                          current file
 
         Return
             mpldic (dict): dictionary of data in specified time frame.
@@ -153,6 +158,8 @@ def main(import_d, size2eind_func, size2sind_func):
                         mplsps.append(mplfiles[startind:endind])
                     else:                   # if endtime is after last eom flag
                         mplsps.append(mplfiles[startind:])
+                if includecurrfileboo:
+                    mplsps.append(mplfiles[endind:])
             except ValueError:
                 # in the event there are no eom.flags, the collection of files
                 # is treated as a single scan pattern
