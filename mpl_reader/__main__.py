@@ -21,15 +21,12 @@ def _lstfromtimes_func(times, starttime, endtime, startoff, endoff):
         starttime and (endoff) indexes after endtime
         one index after endtime
     '''
-    times = np.sort(times)
-    st = TIMEFMT.format(starttime)
-    startind = np.argmax(times > st) - 1 - startoff
+    startind = np.argmax(times > starttime) - 1 - startoff
     if startind < 0:            # starttime is before first time provided
         startind = 0
 
     if endtime:
-        et = TIMEFMT.format(endtime)
-        endind = np.argmax(times > et) + endoff
+        endind = np.argmax(times > endtime) + endoff
         if endind == endoff:        # endtime is after last time provided
             endind = None
     else:
@@ -139,22 +136,27 @@ def main(import_d, size2eind_func, size2sind_func):
         else:                   # finding files in data archive
             # finding files
             ## listing directories
-            dates = list(filter(
+            dates = np.array(list(filter(
                     lambda x: x[0] == '2',
                     os.listdir(SOLARISMPLDIR.format(lidarname))
-                ))
+                )))
+            dates = LOCTIMEFN(dates, UTCINFO)
             dates = _lstfromtimes_func(dates, starttime, endtime, 1, 1)
+            dates = list(map(lambda x: DATEFMT.format(x), dates))
 
             ## catergorizing files based on flags
             datedir_l = [DIRCONFN(SOLARISMPLDIR.format(lidarname), date)
                          for date in dates]
             eomtimes = DIRPARSEFN(FINDFILESFN(MPLEOMFILE, datedir_l),
                                   MPLEOMTIMEFIELD)
+            eomtimes.sort()
+            eomtimes = LOCTIMEFN(eomtimes, UTCINFO)
             mplfiles = FINDFILESFN(MPLFILE, datedir_l)
             mplfiles.sort()
             mplfiles = np.array(mplfiles)
             times = DIRPARSEFN(mplfiles, MPLTIMEFIELD)
-            if starttime > pd.Timestamp(str(times[-1])):
+            times = LOCTIMEFN(times, UTCINFO)
+            if starttime > times[-1]:
                 return {}
 
             try:
@@ -172,7 +174,7 @@ def main(import_d, size2eind_func, size2sind_func):
                     else:                   # if endtime is after last eom flag
                         mplsps.append(mplfiles[startind:])
                 if endtime:
-                    if endtime > times[-1].astype(np.datetime64):
+                    if endtime > times[-1]:
                         mplsps.append(mplfiles[endind:])
                 else:
                     mplsps.append(mplfiles[endind:])
@@ -255,6 +257,7 @@ def main(import_d, size2eind_func, size2sind_func):
         ## converting time to datetime like object
         timedic = {key: mpldic[key] for key in time_keylst}
         timeara = pd.to_datetime(pd.DataFrame(timedic)).to_numpy('datetime64[s]')
+        timeara = LOCTIMEFN(timeara, UTCINFO)
         mpldic[time_key] = timeara
         ## treating channels differently;
         ### reshape arrays into measurements
