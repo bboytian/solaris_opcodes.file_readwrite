@@ -113,7 +113,9 @@ def main(import_d, size2eind_func, size2sind_func):
                               is specified
             start/endtime (datetime like): approx start/end time of data of
                                            interest, specified if mplfiledir
-                                           is None
+                                           is None.
+                                           leave endtime empty if we want latest
+                                           must be timezone aware
             filename (str): output will be a json file format, if specified
 
         Return
