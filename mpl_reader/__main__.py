@@ -143,6 +143,7 @@ def main(import_d, size2eind_func, size2sind_func):
                     os.listdir(SOLARISMPLDIR.format(lidarname))
                 )))
             dates = LOCTIMEFN(dates, UTCINFO)
+            dates.sort()
             dates = _lstfromtimes_func(dates, starttime, endtime, 1, 1)
             dates = list(map(lambda x: DATEFMT.format(x), dates))
 
@@ -325,6 +326,12 @@ if __name__ == '__main__':
     smmpl_reader = main(import_dic, size2eind_func, size2sind_func)
 
     from ...globalimports import *
+
+    smmpl_reader(
+        'smmpl_E2',
+        starttime=LOCTIMEFN('202008040000', 8),
+        endtime=LOCTIMEFN('202008050300', 8)
+    )
 
     # testsmmpl_boo = False
     # if testsmmpl_boo:
