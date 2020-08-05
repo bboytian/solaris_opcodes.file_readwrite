@@ -23,12 +23,16 @@ def _lstfromtimes_func(times, starttime, endtime, startoff, endoff):
     '''
     times = np.sort(times)
     st = TIMEFMT.format(starttime)
-    et = TIMEFMT.format(endtime)
     startind = np.argmax(times > st) - 1 - startoff
     if startind < 0:            # starttime is before first time provided
         startind = 0
-    endind = np.argmax(times > et) + endoff
-    if endind == endoff:        # endtime is after last time provided
+
+    if endtime:
+        et = TIMEFMT.format(endtime)
+        endind = np.argmax(times > et) + endoff
+        if endind == endoff:        # endtime is after last time provided
+            endind = None
+    else:
         endind = None
     return times[startind:endind]
 
@@ -154,8 +158,12 @@ def main(import_d, size2eind_func, size2sind_func):
                         mplsps.append(mplfiles[startind:endind])
                     else:                   # if endtime is after last eom flag
                         mplsps.append(mplfiles[startind:])
-                if endtime > times[-1].astype(np.datetime64):
+                if endtime:
+                    if endtime > times[-1].astype(np.datetime64):
+                        mplsps.append(mplfiles[endind:])
+                else:
                     mplsps.append(mplfiles[endind:])
+
             except ValueError:
                 # in the event there are no eom.flags, the collection of files
                 # is treated as a single scan pattern
@@ -252,15 +260,18 @@ def main(import_d, size2eind_func, size2sind_func):
             - (Delr_ta * firstbin_ara)[:, None]
         ## trimming
         mpldickeys = list(mpldic.keys())
-        if starttime and endtime:
+        if starttime:
             # trimming can still take place even when reading single file
             startind = np.argmax(timeara > starttime)
-            endind = np.argmax(timeara > endtime)
-            if not endind:
+            if endtime:
+                endind = np.argmax(timeara > endtime)
+                if not endind:
+                    endind = None
+            else:
                 endind = None
-            mpldic = {key:mpldic[key][startind:endind] for key in mpldickeys}
+            mpldic = {key: mpldic[key][startind:endind] for key in mpldickeys}
         elif slicetup and mplfiledir:   # accord to slicetup
-            mpldic = {key:mpldic[key][slicetup] for key in mpldickeys}
+            mpldic = {key: mpldic[key][slicetup] for key in mpldickeys}
         print('total of {} measurements'.format(len(mpldic[time_key])))
 
 
