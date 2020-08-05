@@ -75,7 +75,6 @@ def main(import_d, size2eind_func, size2sind_func):
             mplfiledir=None, slicetup=None,
             starttime=None, endtime=None,
             filename=None,
-            includecurrfileboo=False,
     ):
         '''
         1 shot no. of bytes  = headersize + no. of channels * dtype size * Nbin
@@ -115,10 +114,6 @@ def main(import_d, size2eind_func, size2sind_func):
                                            interest, specified if mplfiledir
                                            is None
             filename (str): output will be a json file format, if specified
-            includecurrfileboo (boolean): decides whether or not to include files
-                                          after the last eomtime. This is meant
-                                          to be used only if we want to read the
-                                          current file
 
         Return
             mpldic (dict): dictionary of data in specified time frame.
@@ -143,6 +138,7 @@ def main(import_d, size2eind_func, size2sind_func):
             mplfiles = FINDFILESFN(MPLFILE, datedir_l)
             mplfiles.sort()
             mplfiles = np.array(mplfiles)
+
             try:
                 # each ara in lst is scanpat, no need to worry about edge cases
                 # as there are is an excess of mpl flags
@@ -158,7 +154,7 @@ def main(import_d, size2eind_func, size2sind_func):
                         mplsps.append(mplfiles[startind:endind])
                     else:                   # if endtime is after last eom flag
                         mplsps.append(mplfiles[startind:])
-                if includecurrfileboo:
+                if endtime > times[-1].astype(np.datetime64):
                     mplsps.append(mplfiles[endind:])
             except ValueError:
                 # in the event there are no eom.flags, the collection of files
@@ -236,9 +232,8 @@ def main(import_d, size2eind_func, size2sind_func):
         mpldic[bintime_key] = mpldic[bintime_key] * bintimefactor
         mpldic[energy_key] = mpldic[energy_key] * energyfactor
         ## converting time to datetime like object
-        timedic = {key:mpldic[key] for key in time_keylst}
-        timeara = pd.to_datetime(pd.DataFrame(timedic))\
-                    .to_numpy('datetime64[s]')
+        timedic = {key: mpldic[key] for key in time_keylst}
+        timeara = pd.to_datetime(pd.DataFrame(timedic)).to_numpy('datetime64[s]')
         mpldic[time_key] = timeara
         ## treating channels differently;
         ### reshape arrays into measurements
@@ -302,52 +297,52 @@ if __name__ == '__main__':
 
     from ...globalimports import *
 
-    testsmmpl_boo = False
-    if testsmmpl_boo:
+    # testsmmpl_boo = False
+    # if testsmmpl_boo:
 
-        starttime = pd.Timestamp('202007150000')
-        endtime = pd.Timestamp('202007160000')
-        mpldic = smmpl_reader(
-            'smmpl_E2',
-            starttime=starttime, endtime=endtime,
-        )
+    #     starttime = pd.Timestamp('202007150000')
+    #     endtime = pd.Timestamp('202007160000')
+    #     mpldic = smmpl_reader(
+    #         'smmpl_E2',
+    #         starttime=starttime, endtime=endtime,
+    #     )
 
-        ch1_aara = mpldic['Channel #1 Data']
-        ch2_aara = mpldic['Channel #2 Data']
-        ch_amask = mpldic['Channel Data Mask']
-        bintime_ara = mpldic['Bin Time']
-        binnum_ara = mpldic['Number Bins']
+    #     ch1_aara = mpldic['Channel #1 Data']
+    #     ch2_aara = mpldic['Channel #2 Data']
+    #     ch_amask = mpldic['Channel Data Mask']
+    #     bintime_ara = mpldic['Bin Time']
+    #     binnum_ara = mpldic['Number Bins']
 
-        counter = 0
-        for i, binnum in enumerate(binnum_ara):
-            r_ara = np.cumsum(3e8*bintime_ara[i] * np.ones(binnum))
-            plt.plot(r_ara, ch1_aara[i][ch_amask[i]], color='C0')
-            plt.plot(r_ara, ch2_aara[i][ch_amask[i]], color='C1')
-            counter += 1
-            if counter > 100:
-                break
+    #     counter = 0
+    #     for i, binnum in enumerate(binnum_ara):
+    #         r_ara = np.cumsum(3e8*bintime_ara[i] * np.ones(binnum))
+    #         plt.plot(r_ara, ch1_aara[i][ch_amask[i]], color='C0')
+    #         plt.plot(r_ara, ch2_aara[i][ch_amask[i]], color='C1')
+    #         counter += 1
+    #         if counter > 100:
+    #             break
 
-    else:
-        lidarname, mpl_fn = 'mpl_S2S', '/home/tianli/SOLAR_EMA_project/codes/solaris_opcodes/product_calc/nrb_calc/testNRB_mpl_S2S.mpl'
-        mpldic = mpl_reader(
-            lidarname, mplfiledir=mpl_fn,
-            slicetup=slice(OVERLAPPROFSTART, OVERLAPPROFEND, 1)
-        )
+    # else:
+    #     lidarname, mpl_fn = 'mpl_S2S', '/home/tianli/SOLAR_EMA_project/codes/solaris_opcodes/product_calc/nrb_calc/testNRB_mpl_S2S.mpl'
+    #     mpldic = mpl_reader(
+    #         lidarname, mplfiledir=mpl_fn,
+    #         slicetup=slice(OVERLAPPROFSTART, OVERLAPPROFEND, 1)
+    #     )
 
-        ch1_aara = mpldic['Channel #1 Data']
-        ch2_aara = mpldic['Channel #2 Data']
+    #     ch1_aara = mpldic['Channel #1 Data']
+    #     ch2_aara = mpldic['Channel #2 Data']
 
-        ch_amask = mpldic['Channel Data Mask']
-        bintime_ara = mpldic['Bin Time']
-        binnum_ara = mpldic['Number Data Bins']
+    #     ch_amask = mpldic['Channel Data Mask']
+    #     bintime_ara = mpldic['Bin Time']
+    #     binnum_ara = mpldic['Number Data Bins']
 
-        for i, binnum in enumerate(binnum_ara):
-            if i in []:
-                pass
-            else:
-                r_ara = np.cumsum(3e8*bintime_ara[i]/2/1000 * np.ones(binnum))
-                plt.plot(r_ara, ch1_aara[i][ch_amask[i]], color='C0')
-                plt.plot(r_ara, ch2_aara[i][ch_amask[i]], color='C1')
+    #     for i, binnum in enumerate(binnum_ara):
+    #         if i in []:
+    #             pass
+    #         else:
+    #             r_ara = np.cumsum(3e8*bintime_ara[i]/2/1000 * np.ones(binnum))
+    #             plt.plot(r_ara, ch1_aara[i][ch_amask[i]], color='C0')
+    #             plt.plot(r_ara, ch2_aara[i][ch_amask[i]], color='C1')
 
-    plt.yscale('log')
-    plt.show()
+    # plt.yscale('log')
+    # plt.show()
