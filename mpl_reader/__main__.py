@@ -121,8 +121,19 @@ def main(import_d, size2eind_func, size2sind_func):
 
         Return
             mpldic (dict): dictionary of data in specified time frame.
-                           keys are listed in .mplfmt.py
+                           keys are listed in .mplfmt.py.
+                           dictionary is empty if the starttime is greater than
+                           available files
         '''
+        # catching wrong inputs
+        try:
+            if endtime <= starttime:
+                raise ValueError(
+                    f'{endtime=:} must be greater than {starttime=:} '
+                )
+        except TypeError:
+            pass
+
         if mplfiledir:          # single file read
             mplsps = [[mplfiledir]]
         else:                   # finding files in data archive
@@ -142,6 +153,9 @@ def main(import_d, size2eind_func, size2sind_func):
             mplfiles = FINDFILESFN(MPLFILE, datedir_l)
             mplfiles.sort()
             mplfiles = np.array(mplfiles)
+            times = DIRPARSEFN(mplfiles, MPLTIMEFIELD)
+            if starttime > pd.Timestamp(str(times[-1])):
+                return {}
 
             try:
                 # each ara in lst is scanpat, no need to worry about edge cases
@@ -149,7 +163,6 @@ def main(import_d, size2eind_func, size2sind_func):
                 eomtimes = _lstfromtimes_func(eomtimes,
                                               starttime, endtime, 0, 1)
                 seomtimes, eeomtimes = eomtimes[:-1], eomtimes[1:]
-                times = DIRPARSEFN(mplfiles, MPLTIMEFIELD)
                 mplsps = []
                 for i, seomtime in enumerate(seomtimes):
                     startind = np.argmax(times > seomtime)
