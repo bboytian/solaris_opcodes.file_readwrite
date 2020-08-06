@@ -281,7 +281,7 @@ def main(import_d, size2eind_func, size2sind_func):
         mpldickeys = list(mpldic.keys())
         if starttime:
             # trimming can still take place even when reading single file
-            startind = np.argmax(timeara > starttime)
+            startind = np.argmax(timeara >= starttime)
             if endtime:
                 endind = np.argmax(timeara > endtime)
                 if not endind:
@@ -327,11 +327,13 @@ if __name__ == '__main__':
 
     from ...globalimports import *
 
-    smmpl_reader(
+    mpl_d = smmpl_reader(
         'smmpl_E2',
         starttime=LOCTIMEFN('202008040000', 8),
-        endtime=LOCTIMEFN('202008050300', 8)
+        endtime=LOCTIMEFN(dt.datetime.now(), 8)
     )
+    ts_a = mpl_d['Timestamp']
+    print(ts_a[0], ts_a[-1])
 
     # testsmmpl_boo = False
     # if testsmmpl_boo:
