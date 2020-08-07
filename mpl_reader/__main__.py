@@ -9,6 +9,11 @@ import pandas as pd
 from ...globalimports import *
 
 
+# params
+_casetwoind = -2                # in the event there is only one eomtime returned from
+                                # _lstfromtimes_func, we will read the last _casetwoind mplfiles
+
+
 # supp func
 def _lstfromtimes_func(times, starttime, endtime, startoff, endoff):
     '''
@@ -176,18 +181,23 @@ def main(import_d, size2eind_func, size2sind_func):
                 for i, seomtime in enumerate(seomtimes):
                     startind = np.argmax(times > seomtime)
                     endind = np.argmax(times > eeomtimes[i])
+                    if not endind:
+                        endind = None
                     mplsps.append(mplfiles[startind:endind])
                 # to handle data that falls outside the eom flag boundries
                 # due to scanpatterns that has not ended yet
-                if len(mplsps):
+                # logic is a little confusing, refer to log 20200807
+                leneomtimes = len(eomtimes)
+                if leneomtimes > 1 or len(mplsps[0]):
                     if endtime:
-                        if endtime > times[-1]:
+                        if endtime > eomtimes[-1]:
                             mplsps.append(mplfiles[endind:])
                     else:
                         mplsps.append(mplfiles[endind:])
+                elif leneomtimes == 1 and len(mplsps[0]) == 0:
+                    mplsps[0] = mplfiles[_casetwoind:]
                 else:
-                    startind = np.argmax(times >= starttime)
-                    mplsps.append(mplfiles[startind:])
+                    raise Exception('Unforseen logic case')
             except ValueError:
                 # in the event there are no eom.flags, the collection of files
                 # is treated as a single scan pattern
@@ -199,21 +209,21 @@ def main(import_d, size2eind_func, size2sind_func):
         bytearA = []
         Nbin_arA = []
         for i, mplsp in enumerate(mplsps):
-            if len(mplsps) > 1:
+            if len(mplsp):
                 print(f'\t scanpattern {i}:')
-            # concat files related to scanpattern
-            byteara = bytearray()
-            for mplfile in mplsp:
-                print('\t{}'.format(mplfile))
-                with open(mplfile, 'rb') as mplf:
-                    byteara += bytearray(mplf.read())
-            # convert binary data to numpy array for reshaping
-            byteara = np.frombuffer(byteara, dtype=np.byte)
-            ## reading channel length from first measurement
-            Nbin = np.frombuffer(byteara[Nbinsind:Nbineind],
-                                 dtype=dtype_dic[Nbin_key])[0]
-            Nbin_arA.append(Nbin)
-            bytearA.append(byteara)
+                # concat files related to scanpattern
+                byteara = bytearray()
+                for mplfile in mplsp:
+                    print('\t{}'.format(mplfile))
+                    with open(mplfile, 'rb') as mplf:
+                        byteara += bytearray(mplf.read())
+                # convert binary data to numpy array for reshaping
+                byteara = np.frombuffer(byteara, dtype=np.byte)
+                ## reading channel length from first measurement
+                Nbin = np.frombuffer(byteara[Nbinsind:Nbineind],
+                                     dtype=dtype_dic[Nbin_key])[0]
+                Nbin_arA.append(Nbin)
+                bytearA.append(byteara)
         ## editing indices for channels to fit the maxNbbin
         maxNbin = max(Nbin_arA)
         for channel_key in channel_keylst:  # to be used when convert ara to dic
