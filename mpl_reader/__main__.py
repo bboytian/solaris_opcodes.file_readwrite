@@ -21,9 +21,13 @@ def _lstfromtimes_func(times, starttime, endtime, startoff, endoff):
         starttime and (endoff) indexes after endtime
         one index after endtime
     '''
-    startind = np.argmax(times > starttime) - 1 - startoff
-    if startind < 0:            # starttime is before first time provided
-        startind = 0
+    starttimeboo_a = times > starttime
+    startind = np.argmax(starttimeboo_a) - 1 - startoff
+    if startind < 0:
+        if starttimeboo_a.any():  # starttime is before first time provided
+            startind = 0
+        else:                   # starttime is equal to the last eom.flag
+            startind = -1
 
     if endtime:
         endind = np.argmax(times > endtime) + endoff
@@ -98,8 +102,6 @@ def main(import_d, size2eind_func, size2sind_func):
         Future
             - possible to cut size of array by removing the empty bins at the
               start
-            - Bin Time is scaled by a factor which is defined in import_d,
-              remove this note if this is found to be universally correct
             - There is a very crude hardcode here that filters the directories
               under data, to only include relevant data.
               It finds the directories which start with '2'.
@@ -165,6 +167,8 @@ def main(import_d, size2eind_func, size2sind_func):
             try:
                 # each ara in lst is scanpat, no need to worry about edge cases
                 # as there are is an excess of mpl flags
+                # here we select all eomtimes within the start and end time
+                # all eom flags should fall within the mplfile times
                 eomtimes = _lstfromtimes_func(eomtimes,
                                               starttime, endtime, 0, 1)
                 seomtimes, eeomtimes = eomtimes[:-1], eomtimes[1:]
@@ -172,16 +176,18 @@ def main(import_d, size2eind_func, size2sind_func):
                 for i, seomtime in enumerate(seomtimes):
                     startind = np.argmax(times > seomtime)
                     endind = np.argmax(times > eeomtimes[i])
-                    if endind:
-                        mplsps.append(mplfiles[startind:endind])
-                    else:                   # if endtime is after last eom flag
-                        mplsps.append(mplfiles[startind:])
-                if endtime:
-                    if endtime > times[-1]:
+                    mplsps.append(mplfiles[startind:endind])
+                # to handle data that falls outside the eom flag boundries
+                # due to scanpatterns that has not ended yet
+                if len(mplsps):
+                    if endtime:
+                        if endtime > times[-1]:
+                            mplsps.append(mplfiles[endind:])
+                    else:
                         mplsps.append(mplfiles[endind:])
                 else:
-                    mplsps.append(mplfiles[endind:])
-
+                    startind = np.argmax(times >= starttime)
+                    mplsps.append(mplfiles[startind:])
             except ValueError:
                 # in the event there are no eom.flags, the collection of files
                 # is treated as a single scan pattern
