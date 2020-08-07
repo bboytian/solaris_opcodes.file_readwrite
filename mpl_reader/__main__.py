@@ -187,17 +187,18 @@ def main(import_d, size2eind_func, size2sind_func):
                 # to handle data that falls outside the eom flag boundries
                 # due to scanpatterns that has not ended yet
                 # logic is a little confusing, refer to log 20200807
-                leneomtimes = len(eomtimes)
-                if leneomtimes > 1 or len(mplsps[0]):
+                if mplsps:  # indicates that there were full scanpatterns data
+                    if endind and eeomtimes[i] == eeomtimes[-1]:
+                    # indicates the possibility of trailing files
+                        if endind != len(times):
+                            if endtime:
+                                if endtime > eeomtimes[i]:
+                                    mplsps.append(mplfiles[endind:])
+                            else:
+                                mplsps.append(mplfiles[endind:])
+                else:           # probing for last scan pattern file
                     if endtime:
-                        if endtime > eomtimes[-1] and endind:
-                            mplsps.append(mplfiles[endind:])
-                    else:
-                        mplsps.append(mplfiles[endind:])
-                elif leneomtimes == 1 and len(mplsps[0]) == 0:
-                    mplsps[0] = mplfiles[_casetwoind:]
-                else:
-                    raise Exception('Unforseen logic case')
+                        mplsps.append(mplfiles[_casetwoind:])
             except ValueError:
                 # in the event there are no eom.flags, the collection of files
                 # is treated as a single scan pattern
