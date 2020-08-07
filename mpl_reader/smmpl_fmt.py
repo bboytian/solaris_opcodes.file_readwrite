@@ -17,7 +17,7 @@ def size2eind_func(bytesizedic):
 def size2sind_func(sinddic):
     '''
     converts bytesizedic to byteinddic. start index of each data key
-    '''    
+    '''
     vals, keys = list(sinddic.values()), list(sinddic.keys())
     vals.pop()
     vals.insert(0, 0)
@@ -78,7 +78,7 @@ wanted_keylst = [
     'McsMode',
     'First data bin',           # noted to be zero, mught be redundant
     'System Type',
-    'Sync Pulses Seen Per Second', # for performance, this values changes
+    'Sync Pulses Seen Per Second',  # for performance, this values changes
     'First Background Bin',
     # 'Header Size',              # static 163,size of data before the channels
     'Weather Station Used',

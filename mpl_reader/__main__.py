@@ -181,7 +181,7 @@ def main(import_d, size2eind_func, size2sind_func):
                 for i, seomtime in enumerate(seomtimes):
                     startind = np.argmax(times > seomtime)
                     endind = np.argmax(times > eeomtimes[i])
-                    if not endind:
+                    if not endind:  # when the last eeomtime is
                         endind = None
                     mplsps.append(mplfiles[startind:endind])
                 # to handle data that falls outside the eom flag boundries
@@ -190,7 +190,7 @@ def main(import_d, size2eind_func, size2sind_func):
                 leneomtimes = len(eomtimes)
                 if leneomtimes > 1 or len(mplsps[0]):
                     if endtime:
-                        if endtime > eomtimes[-1]:
+                        if endtime > eomtimes[-1] and endind:
                             mplsps.append(mplfiles[endind:])
                     else:
                         mplsps.append(mplfiles[endind:])
