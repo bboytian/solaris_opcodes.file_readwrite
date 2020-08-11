@@ -6,7 +6,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from ...globalimports import *
+from ...global_imports import *
 
 
 # params
@@ -342,7 +342,7 @@ if __name__ == '__main__':
     from .smmpl_fmt import size2eind_func, size2sind_func
     smmpl_reader = main(import_dic, size2eind_func, size2sind_func)
 
-    from ...globalimports import *
+    from ...global_imports import *
 
     mpl_d = smmpl_reader(
         'smmpl_E2',
