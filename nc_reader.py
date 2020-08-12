@@ -17,7 +17,7 @@ def main(data_dir, refreshjson_boo=False):
     - arrays are converted to list before json dumping as numpy arrays canno
       be serialised
     - function is called recursively so that data is read as numpy arrays
-    - json file stores date and time as string, but function reads them as 
+    - json file stores date and time as string, but function reads them as
       pd.Timstamp
 
     Parameters:
@@ -30,7 +30,7 @@ def main(data_dir, refreshjson_boo=False):
     # listing out info for extracting
     timevar = 'time'
     timevar_lst = [
-        'date_yyyyMMdd', 'time_hhmmss',        
+        'date_yyyyMMdd', 'time_hhmmss',
     ]
     valvar_lst = [
         'elevation_angle', 'azimuth_angle',
@@ -53,7 +53,7 @@ def main(data_dir, refreshjson_boo=False):
         'clouds',
     ]
 
-    
+
     try:                        # reading from file if data has been read before
         if refreshjson_boo:     # forcing a refresh of the file
             raise IOError
@@ -65,16 +65,16 @@ def main(data_dir, refreshjson_boo=False):
                     dic[timevar] = pd.Timestamp(
                         dic['date_yyyyMMdd'][1:-1] + dic['time_hhmmss'][1:-1]
                     )
-                    
+
                     # turning lists arrays into numpy arrays
                     for var, val in dic.items():
                         if var in valvar_lst and var not in timevar_lst:
                             dic[var] = float(val)
                         elif var in aravar_lst and var not in timevar_lst:
                             dic[var] = np.array(val)
-                        
+
                 return ret_ara
-                            
+
 
     except IOError:             # reading files and writing json file
         # iterating through nc files
@@ -116,7 +116,7 @@ def main(data_dir, refreshjson_boo=False):
 
         # calling function again so that data can be read as numpy array
         return main(data_dir, refreshjson_boo=False)
-    
+
 
 if __name__ == '__main__':
 
