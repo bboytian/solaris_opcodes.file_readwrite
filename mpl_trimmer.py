@@ -23,7 +23,7 @@ if __name__ == '__main__':
     import datetime as dt
     import os
 
-    from ..globalimports import *
+    from ..global_imports.solaris_opcodes import *
 
     lidarname = 'mpl_S2S'
     date = dt.datetime(2020, 6, 2)

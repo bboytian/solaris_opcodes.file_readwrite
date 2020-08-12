@@ -7,7 +7,7 @@ import netCDF4 as nc4
 import numpy as np
 import pandas as pd
 
-from ..globalimports import *
+from ..global_imports.solaris_opcodes import *
 
 
 def main(data_dir, refreshjson_boo=False):
