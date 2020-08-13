@@ -49,11 +49,11 @@ wanted_keylst = [
     'Shots Sum',
     'Trigger Frequency',        # for performance check
     'Energy Monitor',           # [nJ]
-    'Temp #0',
-    'Temp #1',
-    'Temp #2',
-    'Temp #3',
-    'Temp #4',
+    'Temp #0',                  # Detector Temperature
+    'Temp #1',                  # unknown
+    'Temp #2',                  # Telescope Temperature
+    'Temp #3',                  # Laser temperature
+    'Temp #4',                  # unknown
     'Background Average',
     'Background Std Dev',
     # 'Number Channels',        # assumed to always be 2
