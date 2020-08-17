@@ -49,6 +49,7 @@ def main(import_d, size2eind_func, size2sind_func):
     def reader_func(
             lidarname,
             mplfiledir=None, slicetup=None,
+            readerstartind=MPLREADERSTARTIND, readerendind=MPLREADERENDIND,
             starttime=None, endtime=None,
             filename=None,
     ):
@@ -82,6 +83,8 @@ def main(import_d, size2eind_func, size2sind_func):
                               should be None
             slicetup (slice): slice tuple along time axis, only if mplfiledir
                               is specified
+            readerstart/endind (int): index offset from the specified data start
+                                      and end dates to search for the profiles
             start/endtime (datetime like): approx start/end time of data of
                                            interest, specified if mplfiledir
                                            is None.
@@ -117,7 +120,7 @@ def main(import_d, size2eind_func, size2sind_func):
             dates.sort()
             ## choosing relevant date folders
             starttimeboo_a = dates > starttime
-            startind = np.argmax(starttimeboo_a) - MPLREADERSTARTIND
+            startind = np.argmax(starttimeboo_a) - readerstartind
             if startind < 0:
                 if starttimeboo_a.any():  # starttime is before first date
                     startind = 0
@@ -125,7 +128,7 @@ def main(import_d, size2eind_func, size2sind_func):
                     startind = -1
             if endtime:
                 endtimeboo_a = dates > endtime
-                endind = np.argmax(endtimeboo_a) + MPLREADERENDIND
+                endind = np.argmax(endtimeboo_a) + readerendin
                 if not endtimeboo_a.any():  # endtime is after last date
                     endind = None
             else:
