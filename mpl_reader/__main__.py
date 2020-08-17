@@ -9,35 +9,6 @@ import pandas as pd
 from ...global_imports.solaris_opcodes import *
 
 
-# supp func
-def _lstfromtimes_func(times, starttime, endtime, startoff, endoff):
-    '''
-    Paramters
-        times (pd.Timeseries)
-        start/endtime (datetime like): approx start/end time of data of interest
-        start/endoff (int): offset to start and end trimming, refer to 'Return'
-    Return
-        whatever left of the timeseries that is (1+startoff) indexes before
-        starttime and (endoff) indexes after endtime
-        one index after endtime
-    '''
-    starttimeboo_a = times > starttime
-    startind = np.argmax(starttimeboo_a) - 1 - startoff
-    if startind < 0:
-        if starttimeboo_a.any():  # starttime is before first time provided
-            startind = 0
-        else:                   # starttime is equal to the last eom.flag
-            startind = -1
-
-    if endtime:
-        endind = np.argmax(times > endtime) + endoff
-        if endind == endoff:        # endtime is after last time provided
-            endind = None
-    else:
-        endind = None
-    return times[startind:endind]
-
-
 # reader_funcfunc
 def main(import_d, size2eind_func, size2sind_func):
     '''
@@ -100,8 +71,6 @@ def main(import_d, size2eind_func, size2sind_func):
             - range array for channels
 
         Future
-            - possible to cut size of array by removing the empty bins at the
-              start
             - There is a very crude hardcode here that filters the directories
               under data, to only include relevant data.
               It finds the directories which start with '2'.
@@ -146,7 +115,24 @@ def main(import_d, size2eind_func, size2sind_func):
                 )))
             dates = LOCTIMEFN(dates, UTCINFO)
             dates.sort()
-            dates = _lstfromtimes_func(dates, starttime, endtime, 1, 1)
+            ## choosing relevant date folders
+            starttimeboo_a = dates > starttime
+            startind = np.argmax(starttimeboo_a) - MPLREADERSTARTIND
+            if startind < 0:
+                if starttimeboo_a.any():  # starttime is before first date
+                    startind = 0
+                else:                   # starttime could be within last date
+                    startind = -1
+            if endtime:
+                endtimeboo_a = dates > endtime
+                endind = np.argmax(endtimeboo_a) + MPLREADERENDIND
+                if not endtimeboo_a.any():  # endtime is after last date
+                    endind = None
+            else:
+                endind = None
+            dates = dates[startind:endind]
+
+
             dates = list(map(lambda x: DATEFMT.format(x), dates))
 
             ## catergorizing files based on flags
@@ -306,7 +292,7 @@ if __name__ == '__main__':
 
     from ...global_imports.solaris_opcodes import *
 
-    testsmmpl_boo = False
+    testsmmpl_boo = True
     if testsmmpl_boo:
 
         starttime = LOCTIMEFN('202007150000', UTCINFO)
