@@ -163,6 +163,11 @@ def main(import_d, size2eind_func, size2sind_func):
             except IndexError:  # in the event the file is empty
                 pass
 
+        ## catching the case where all files are empty
+        if not byteara_l:
+            print('no non-empty files found')
+            return {}
+
         ## editing indices for channels to fit the maxNbbin
         maxNbin = max(Nbin_l)
         for channelkey in channelkey_l:  # to be used when convert ara to dic
