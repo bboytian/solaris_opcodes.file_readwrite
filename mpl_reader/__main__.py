@@ -139,7 +139,6 @@ def main(import_d, size2eind_func, size2sind_func):
             dates = list(map(lambda x: DATEFMT.format(x), dates))
             ## finding mpl files
             datedir_l = [DIRCONFN(datesdir, date) for date in dates]
-            print(datedir_l)
             mplfiles = FINDFILESFN(MPLFILE, datedir_l)
             mplfiles.sort()
             mplfiles = np.array(mplfiles)
