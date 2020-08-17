@@ -47,12 +47,12 @@ def main(import_d, size2eind_func, size2sind_func):
     @verbose
     @announcer
     def reader_func(
-            datesdir=MPLREADERDATESDIR,
+            datesdir=SOLARISMPLDIR,
             readerstartind=MPLREADERSTARTIND, readerendind=MPLREADERENDIND,
             mplfiledir=None,
             starttime=None, endtime=None,
             slicetup=None,
-            filename=None, datesdir=MPLREADERDATESDIR,
+            filename=None,
     ):
         '''
         1 shot no. of bytes  = headersize + no. of channels * dtype size * Nbin
@@ -130,7 +130,7 @@ def main(import_d, size2eind_func, size2sind_func):
                     startind = -1
             if endtime:
                 endtimeboo_a = dates > endtime
-                endind = np.argmax(endtimeboo_a) + readerendin
+                endind = np.argmax(endtimeboo_a) + readerendind
                 if not endtimeboo_a.any():  # endtime is after last date
                     endind = None
             else:
@@ -299,15 +299,12 @@ if __name__ == '__main__':
     from .smmpl_fmt import size2eind_func, size2sind_func
     smmpl_reader = main(import_dic, size2eind_func, size2sind_func)
 
-    from ...global_imports.solaris_opcodes import *
-
-    testsmmpl_boo = True
+    testsmmpl_boo = False
     if testsmmpl_boo:
 
         starttime = LOCTIMEFN('202007150000', UTCINFO)
         endtime = LOCTIMEFN('202007160000', UTCINFO)
         mpl_d = smmpl_reader(
-            DIRCONFN(SOLARISMPLDIR, 'smmpl_E2'),
             starttime=starttime, endtime=endtime,
         )
 
