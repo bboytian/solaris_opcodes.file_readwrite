@@ -47,11 +47,12 @@ def main(import_d, size2eind_func, size2sind_func):
     @verbose
     @announcer
     def reader_func(
-            lidarname,
-            mplfiledir=None, slicetup=None,
+            datesdir=MPLREADERDATESDIR,
             readerstartind=MPLREADERSTARTIND, readerendind=MPLREADERENDIND,
+            mplfiledir=None,
             starttime=None, endtime=None,
-            filename=None,
+            slicetup=None,
+            filename=None, datesdir=MPLREADERDATESDIR,
     ):
         '''
         1 shot no. of bytes  = headersize + no. of channels * dtype size * Nbin
@@ -78,18 +79,19 @@ def main(import_d, size2eind_func, size2sind_func):
               This could be left alone for now.
 
         Parameters
-            lidarname (str): directory name of lidar
-            mplfiledir (str): non absolute filename of single mpl file, date
-                              should be None
-            slicetup (slice): slice tuple along time axis, only if mplfiledir
-                              is specified
+            datesdir (str): directory containing all the dates which contains the
+                            mpl files
             readerstart/endind (int): index offset from the specified data start
                                       and end dates to search for the profiles
+            mplfiledir (str): non absolute filename of single mpl file, date
+                              should be None
             start/endtime (datetime like): approx start/end time of data of
                                            interest, specified if mplfiledir
                                            is None.
                                            leave endtime empty if we want latest
                                            must be timezone aware
+            slicetup (slice): slice tuple along time axis, only if mplfiledir
+                              is specified
             filename (str): output will be a json file format, if specified
 
         Return
@@ -114,7 +116,7 @@ def main(import_d, size2eind_func, size2sind_func):
             ## listing directories
             dates = np.array(list(filter(
                     lambda x: x[0] == '2',
-                    os.listdir(SOLARISMPLDIR.format(lidarname))
+                    os.listdir(datesdir)
                 )))
             dates = LOCTIMEFN(dates, UTCINFO)
             dates.sort()
@@ -139,7 +141,7 @@ def main(import_d, size2eind_func, size2sind_func):
             dates = list(map(lambda x: DATEFMT.format(x), dates))
 
             ## catergorizing files based on flags
-            datedir_l = [DIRCONFN(SOLARISMPLDIR.format(lidarname), date)
+            datedir_l = [DIRCONFN(datesdir, date)
                          for date in dates]
             mplfiles = FINDFILESFN(MPLFILE, datedir_l)
             mplfiles.sort()
@@ -148,7 +150,6 @@ def main(import_d, size2eind_func, size2sind_func):
             times = LOCTIMEFN(times, UTCINFO)
 
         # reading files
-
         ## reading files one scanpattern at a time
         byteara_l = []
         Nbin_l = []
@@ -306,7 +307,7 @@ if __name__ == '__main__':
         starttime = LOCTIMEFN('202007150000', UTCINFO)
         endtime = LOCTIMEFN('202007160000', UTCINFO)
         mpl_d = smmpl_reader(
-            'smmpl_E2',
+            DIRCONFN(SOLARISMPLDIR, 'smmpl_E2'),
             starttime=starttime, endtime=endtime,
         )
 
@@ -326,9 +327,9 @@ if __name__ == '__main__':
                 break
 
     else:
-        lidarname, mpl_fn = 'mpl_S2S', '/home/tianli/SOLAR_EMA_project/codes/solaris_opcodes/product_calc/nrb_calc/testNRB_mpl_S2S.mpl'
+        mpl_fn = '/home/tianli/SOLAR_EMA_project/codes/solaris_opcodes/product_calc/nrb_calc/testNRB_mpl_S2S.mpl'
         mpl_d = mpl_reader(
-            lidarname, mplfiledir=mpl_fn,
+            mplfiledir=mpl_fn,
             slicetup=slice(OVERLAPPROFSTART, OVERLAPPROFEND, 1)
         )
 
