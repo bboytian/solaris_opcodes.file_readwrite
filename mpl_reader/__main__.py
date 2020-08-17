@@ -259,7 +259,12 @@ def main(import_d, size2eind_func, size2sind_func):
         elif slicetup and mplfiledir:   # accord to slicetup
             mpl_d = {key: mpl_d[key][slicetup] for key in mplkey_l}
 
-        print('total of {} measurements'.format(len(mpl_d[timekey])))
+        nummeasurements = len(mpl_d[timekey])
+        if nummeasurements:
+            print('total of {} profiles'.format(len(mpl_d[timekey])))
+        else:
+            mpl_d = {}
+            print('no profiles found')
 
 
         # writing to file
