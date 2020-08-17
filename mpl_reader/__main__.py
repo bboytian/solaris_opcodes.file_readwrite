@@ -146,6 +146,7 @@ def main(import_d, size2eind_func, size2sind_func):
             mplfiles = FINDFILESFN(MPLFILE, datedir_l)
             mplfiles.sort()
             mplfiles = np.array(mplfiles)
+            print(mplfiles)
             times = DIRPARSEFN(mplfiles, MPLTIMEFIELD)
             times = LOCTIMEFN(times, UTCINFO)
 
