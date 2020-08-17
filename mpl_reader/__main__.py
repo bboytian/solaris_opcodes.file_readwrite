@@ -118,6 +118,8 @@ def main(import_d, size2eind_func, size2sind_func):
                     lambda x: x[0] == '2',
                     os.listdir(datesdir)
                 )))
+            print(datesdir)
+            print(dates)
             dates = LOCTIMEFN(dates, UTCINFO)
             dates.sort()
             ## choosing relevant date folders
@@ -136,19 +138,12 @@ def main(import_d, size2eind_func, size2sind_func):
             else:
                 endind = None
             dates = dates[startind:endind]
-
-
             dates = list(map(lambda x: DATEFMT.format(x), dates))
-
-            ## catergorizing files based on flags
-            datedir_l = [DIRCONFN(datesdir, date)
-                         for date in dates]
+            ## finding mpl files
+            datedir_l = [DIRCONFN(datesdir, date) for date in dates]
             mplfiles = FINDFILESFN(MPLFILE, datedir_l)
             mplfiles.sort()
             mplfiles = np.array(mplfiles)
-            print(mplfiles)
-            times = DIRPARSEFN(mplfiles, MPLTIMEFIELD)
-            times = LOCTIMEFN(times, UTCINFO)
 
         # reading files
         ## reading files one scanpattern at a time
