@@ -9,11 +9,6 @@ import pandas as pd
 from ...global_imports.solaris_opcodes import *
 
 
-# params
-_casetwoind = -2                # in the event there is only one eomtime returned from
-                                # _lstfromtimes_func, we will read the last _casetwoind mplfiles
-
-
 # supp func
 def _lstfromtimes_func(times, starttime, endtime, startoff, endoff):
     '''
@@ -54,28 +49,28 @@ def main(import_d, size2eind_func, size2sind_func):
         reader_func (func): function to read .mpl files of given function
     '''
     # defining references
-    time_key = import_d['time_key']
-    range_key = import_d['range_key']
-    mask_key = import_d['mask_key']
-    Nbin_key = 'Number Bins'
-    firstbin_key = 'First data bin'  # This is the length of the range axis
-    bintime_key = 'Bin Time'
-    energy_key = 'Energy Monitor'
+    timekey = import_d['time_key']
+    rangekey = import_d['range_key']
+    maskkey = import_d['mask_key']
+    Nbinkey = 'Number Bins'
+    firstbinkey = 'First data bin'  # This is the length of the range axis
+    bintimekey = 'Bin Time'
+    energykey = 'Energy Monitor'
     bintimefactor = import_d['bintimefactor']
     energyfactor = import_d['energyfactor']
     headersize = import_d['headersize']
     channelbytenum = import_d['channelbytenum']
 
-    time_keylst = import_d['time_keylst']
-    channel_keylst = import_d['channel_keylst']
-    wanted_keylst = import_d['wanted_keylst']
+    timekey_l = import_d['time_keylst']
+    channelkey_l = import_d['channel_keylst']
+    wantedkey_l = import_d['wanted_keylst']
 
-    bytesize_dic = import_d['bytesize_dic']  # redundant
-    bytesind_dic = import_d['bytesind_dic']
-    byteeind_dic = import_d['byteeind_dic']
-    dtype_dic = import_d['dtype_dic']
+    bytesize_d = import_d['bytesize_dic']  # redundant
+    bytesind_d = import_d['bytesind_dic']
+    byteeind_d = import_d['byteeind_dic']
+    dtype_d = import_d['dtype_dic']
 
-    Nbinsind, Nbineind = bytesind_dic[Nbin_key], byteeind_dic[Nbin_key]
+    Nbinsind, Nbineind = bytesind_d[Nbinkey], byteeind_d[Nbinkey]
 
     # main reader func
     @verbose
@@ -137,11 +132,11 @@ def main(import_d, size2eind_func, size2sind_func):
                 raise ValueError(
                     f'{endtime=:} must be greater than {starttime=:} '
                 )
-        except TypeError:
+        except TypeError:       # when endtime is not specified
             pass
 
         if mplfiledir:          # single file read
-            mplsps = [[mplfiledir]]
+            mplfiles = [mplfiledir]
         else:                   # finding files in data archive
             # finding files
             ## listing directories
@@ -157,145 +152,111 @@ def main(import_d, size2eind_func, size2sind_func):
             ## catergorizing files based on flags
             datedir_l = [DIRCONFN(SOLARISMPLDIR.format(lidarname), date)
                          for date in dates]
-            eomtimes = DIRPARSEFN(FINDFILESFN(MPLEOMFILE, datedir_l),
-                                  MPLEOMTIMEFIELD)
-            eomtimes.sort()
-            eomtimes = LOCTIMEFN(eomtimes, UTCINFO)
             mplfiles = FINDFILESFN(MPLFILE, datedir_l)
             mplfiles.sort()
             mplfiles = np.array(mplfiles)
             times = DIRPARSEFN(mplfiles, MPLTIMEFIELD)
             times = LOCTIMEFN(times, UTCINFO)
-            if starttime > times[-1]:
-                return {}
-
-            try:
-                # each ara in lst is scanpat, no need to worry about edge cases
-                # as there are is an excess of mpl flags
-                # here we select all eomtimes within the start and end time
-                # all eom flags should fall within the mplfile times
-                eomtimes = _lstfromtimes_func(eomtimes,
-                                              starttime, endtime, 0, 1)
-                seomtimes, eeomtimes = eomtimes[:-1], eomtimes[1:]
-                mplsps = []
-                for i, seomtime in enumerate(seomtimes):
-                    startind = np.argmax(times > seomtime)
-                    endind = np.argmax(times > eeomtimes[i])
-                    if not endind:  # when the last eeomtime is
-                        endind = None
-                    mplsps.append(mplfiles[startind:endind])
-                # to handle data that falls outside the eom flag boundries
-                # due to scanpatterns that has not ended yet
-                # logic is a little confusing, refer to log 20200807
-                if mplsps:  # indicates that there were full scanpatterns data
-                    if endind and eeomtimes[i] == eeomtimes[-1]:
-                    # indicates the possibility of trailing files
-                        if endind != len(times):
-                            if endtime:
-                                if endtime > eeomtimes[i]:
-                                    mplsps.append(mplfiles[endind:])
-                            else:
-                                mplsps.append(mplfiles[endind:])
-                else:           # probing for last scan pattern file
-                    if endtime:
-                        mplsps.append(mplfiles[_casetwoind:])
-            except ValueError:
-                # in the event there are no eom.flags, the collection of files
-                # is treated as a single scan pattern
-                mplsps = [mplfiles]
 
         # reading files
+
         ## reading files one scanpattern at a time
+        byteara_l = []
+        Nbin_l = []
         print('reading files:')
-        bytearA = []
-        Nbin_arA = []
-        for i, mplsp in enumerate(mplsps):
-            if len(mplsp):
-                print(f'\t scanpattern {i}:')
-                # concat files related to scanpattern
-                byteara = bytearray()
-                for mplfile in mplsp:
-                    print('\t{}'.format(mplfile))
-                    with open(mplfile, 'rb') as mplf:
-                        byteara += bytearray(mplf.read())
-                # convert binary data to numpy array for reshaping
-                byteara = np.frombuffer(byteara, dtype=np.byte)
-                ## reading channel length from first measurement
+        for mplfile in mplfiles:
+            print('\t{}'.format(mplfile))
+            with open(mplfile, 'rb') as mplf:
+                byteara = bytearray(mplf.read())
+            # convert binary data to numpy array for reshaping
+            byteara = np.frombuffer(byteara, dtype=np.byte)
+            ## reading channel length from first measurement
+            try:
                 Nbin = np.frombuffer(byteara[Nbinsind:Nbineind],
-                                     dtype=dtype_dic[Nbin_key])[0]
-                Nbin_arA.append(Nbin)
-                bytearA.append(byteara)
+                                     dtype=dtype_d[Nbinkey])[0]
+                Nbin_l.append(Nbin)
+                byteara_l.append(byteara)
+            except IndexError:  # in the event the file is empty
+                pass
+
         ## editing indices for channels to fit the maxNbbin
-        maxNbin = max(Nbin_arA)
-        for channel_key in channel_keylst:  # to be used when convert ara to dic
-            bytesize_dic[channel_key] = channelbytenum * maxNbin
-        byteeind_dic = size2eind_func(bytesize_dic)
-        bytesind_dic = size2sind_func(byteeind_dic)
+        maxNbin = max(Nbin_l)
+        for channelkey in channelkey_l:  # to be used when convert ara to dic
+            bytesize_d[channelkey] = channelbytenum * maxNbin
+        byteeind_d = size2eind_func(bytesize_d)
+        bytesind_d = size2sind_func(byteeind_d)
+
         ## extending measurement to form rectangle block
-        bytearAcopy = deepcopy(bytearA)
-        bytearA = []
-        for i, Nbin in enumerate(Nbin_arA):
-            byteara = bytearAcopy[i]
+        cbyteara_l = deepcopy(byteara_l)
+        byteara_l = []
+        for i, Nbin in enumerate(Nbin_l):
+            byteara = cbyteara_l[i]
             # reshape into rectangle
-            bytesize = headersize + Nbin * len(channel_keylst) * channelbytenum
+            bytesize = headersize + Nbin * len(channelkey_l) * channelbytenum
             bytearalen = len(byteara)
             numara = bytearalen//bytesize
             exind = -(bytearalen % bytesize)
             if exind:
+                raise Exception('Incomplete profile in file')
                 byteara = byteara[:exind]  # trim incomplete mea
             byteara = byteara.reshape(numara, bytesize)
             # extending rectangle
-            append_ara = np.zeros((
+            append_a = np.zeros((
                 numara, (maxNbin - Nbin) * channelbytenum
             ), dtype=np.byte)
             cheind_a = headersize + np.cumsum(
-                np.arange(len(channel_keylst)) * channelbytenum * Nbin
+                np.arange(len(channelkey_l)) * channelbytenum * Nbin
                 )
-            split_arA = np.split(byteara, cheind_a, axis=1)
+            split_A = np.split(byteara, cheind_a, axis=1)
             byteara = np.concatenate([
-                split_ara if i == len(split_arA) - 1 else
-                np.append(split_ara, append_ara, axis=1)
-                for i, split_ara in enumerate(split_arA)
+                split_a if i == len(split_A) - 1 else
+                np.append(split_a, append_a, axis=1)
+                for i, split_a in enumerate(split_A)
             ], axis=1)
-            bytearA.append(byteara)
+            byteara_l.append(byteara)
+
         ## concat scanpatterns together
-        bytearA = np.concatenate(bytearA, axis=0)
-        del(bytearAcopy)
-        ## convert array of measurement bytes to dictionary
+        byteara_l = np.concatenate(byteara_l, axis=0)
+        del(cbyteara_l)
+        ## convert array of measurement bytes to dict
         ## channel arrays are flattened and need to be reshaped
-        mpldic = {
-            key:np.frombuffer(
+        mpl_d = {
+            key: np.frombuffer(
                 np.apply_along_axis(
-                    lambda x: x[bytesind_dic[key]:byteeind_dic[key]].tobytes(),
-                    axis=1, arr=bytearA
-                ), dtype=dtype_dic[key]
-            ) for key in wanted_keylst
+                    lambda x: x[bytesind_d[key]:byteeind_d[key]].tobytes(),
+                    axis=1, arr=byteara_l
+                ), dtype=dtype_d[key]
+            ) for key in wantedkey_l
         }
+
         ## scaling certain quantities to follow convention
-        mpldic[bintime_key] = mpldic[bintime_key] * bintimefactor
-        mpldic[energy_key] = mpldic[energy_key] * energyfactor
+        mpl_d[bintimekey] = mpl_d[bintimekey] * bintimefactor
+        mpl_d[energykey] = mpl_d[energykey] * energyfactor
+
         ## converting time to datetime like object
-        timedic = {key: mpldic[key] for key in time_keylst}
-        timeara = pd.to_datetime(pd.DataFrame(timedic)).to_numpy('datetime64[s]')
+        time_d = {key: mpl_d[key] for key in timekey_l}
+        timeara = pd.to_datetime(pd.DataFrame(time_d)).to_numpy('datetime64[s]')
         timeara = LOCTIMEFN(timeara, UTCINFO)
-        mpldic[time_key] = timeara
+        mpl_d[timekey] = timeara
+
         ## treating channels differently;
         ### reshape arrays into measurements
-        for key in channel_keylst:
-            chara = mpldic[key]
-            mpldic[key] = chara.reshape(len(chara)//maxNbin, maxNbin)
+        for key in channelkey_l:
+            chara = mpl_d[key]
+            mpl_d[key] = chara.reshape(len(chara)//maxNbin, maxNbin)
         ### creating mask to accomodate different range bins and appended bins
-        Nbin_ara = mpldic[Nbin_key]
-        firstbin_ara = mpldic[firstbin_key]  # effectively Ndatabin_ara-Nbin_ara
-        mpldic[mask_key] = (np.arange(maxNbin) >= firstbin_ara[:, None]) *\
+        Nbin_ara = mpl_d[Nbinkey]
+        firstbin_ara = mpl_d[firstbinkey]  # effectively Ndatabin_ara-Nbin_ara
+        mpl_d[maskkey] = (np.arange(maxNbin) >= firstbin_ara[:, None]) *\
             ~(np.arange(maxNbin) > Nbin_ara[:, None])
         ### creating range array
-        Delr_ta = SPEEDOFLIGHT * mpldic[bintime_key]  # binsize
-        mpldic[range_key] = Delr_ta[:, None] * np.arange(np.max(Nbin_ara))\
+        Delr_ta = SPEEDOFLIGHT * mpl_d[bintimekey]  # binsize
+        mpl_d[rangekey] = Delr_ta[:, None] * np.arange(np.max(Nbin_ara))\
             + Delr_ta[:, None]/2\
             - (Delr_ta * firstbin_ara)[:, None]
-        ## trimming
-        mpldickeys = list(mpldic.keys())
+
+        ## trimming according to starttime and endtime
+        mplkey_l = list(mpl_d.keys())
         if starttime:
             # trimming can still take place even when reading single file
             startind = np.argmax(timeara >= starttime)
@@ -305,27 +266,28 @@ def main(import_d, size2eind_func, size2sind_func):
                     endind = None
             else:
                 endind = None
-            mpldic = {key: mpldic[key][startind:endind] for key in mpldickeys}
+            mpl_d = {key: mpl_d[key][startind:endind] for key in mplkey_l}
         elif slicetup and mplfiledir:   # accord to slicetup
-            mpldic = {key: mpldic[key][slicetup] for key in mpldickeys}
-        print('total of {} measurements'.format(len(mpldic[time_key])))
+            mpl_d = {key: mpl_d[key][slicetup] for key in mplkey_l}
+
+        print('total of {} measurements'.format(len(mpl_d[timekey])))
 
 
         # writing to file
         if filename:
             # jsonify arrays
             mpljson = {
-                key:mpldic[key].tolist()
-                for key in mpldickeys
+                key: mpl_d[key].tolist()
+                for key in mplkey_l
             }
             ## treating timestamp array differently
-            mpljson[time_key] = (mpldic[time_key].astype(np.str)).tolist()
+            mpljson[timekey] = (mpl_d[timekey].astype(np.str)).tolist()
 
             with open(filename, 'w') as jsonfile:
                 jsonfile.write(json.dumps(mpljson))
 
         # returning
-        return mpldic
+        return mpl_d
 
     return reader_func
 
@@ -344,60 +306,52 @@ if __name__ == '__main__':
 
     from ...global_imports.solaris_opcodes import *
 
-    mpl_d = smmpl_reader(
-        'smmpl_E2',
-        starttime=LOCTIMEFN('202008040000', 8),
-        endtime=LOCTIMEFN(dt.datetime.now(), 8)
-    )
-    ts_a = mpl_d['Timestamp']
-    print(ts_a[0], ts_a[-1])
+    testsmmpl_boo = False
+    if testsmmpl_boo:
 
-    # testsmmpl_boo = False
-    # if testsmmpl_boo:
+        starttime = LOCTIMEFN('202007150000', UTCINFO)
+        endtime = LOCTIMEFN('202007160000', UTCINFO)
+        mpl_d = smmpl_reader(
+            'smmpl_E2',
+            starttime=starttime, endtime=endtime,
+        )
 
-    #     starttime = pd.Timestamp('202007150000')
-    #     endtime = pd.Timestamp('202007160000')
-    #     mpldic = smmpl_reader(
-    #         'smmpl_E2',
-    #         starttime=starttime, endtime=endtime,
-    #     )
+        ch1_tra = mpl_d['Channel #1 Data']
+        ch2_tra = mpl_d['Channel #2 Data']
+        ch_trm = mpl_d['Channel Data Mask']
+        bintime_ta = mpl_d['Bin Time']
+        binnum_ta = mpl_d['Number Bins']
 
-    #     ch1_aara = mpldic['Channel #1 Data']
-    #     ch2_aara = mpldic['Channel #2 Data']
-    #     ch_amask = mpldic['Channel Data Mask']
-    #     bintime_ara = mpldic['Bin Time']
-    #     binnum_ara = mpldic['Number Bins']
+        counter = 0
+        for i, binnum in enumerate(binnum_ta):
+            r_ta = np.cumsum(3e8*bintime_ta[i] * np.ones(binnum))
+            plt.plot(r_ta, ch1_tra[i][ch_trm[i]], color='C0')
+            plt.plot(r_ta, ch2_tra[i][ch_trm[i]], color='C1')
+            counter += 1
+            if counter > 100:
+                break
 
-    #     counter = 0
-    #     for i, binnum in enumerate(binnum_ara):
-    #         r_ara = np.cumsum(3e8*bintime_ara[i] * np.ones(binnum))
-    #         plt.plot(r_ara, ch1_aara[i][ch_amask[i]], color='C0')
-    #         plt.plot(r_ara, ch2_aara[i][ch_amask[i]], color='C1')
-    #         counter += 1
-    #         if counter > 100:
-    #             break
+    else:
+        lidarname, mpl_fn = 'mpl_S2S', '/home/tianli/SOLAR_EMA_project/codes/solaris_opcodes/product_calc/nrb_calc/testNRB_mpl_S2S.mpl'
+        mpl_d = mpl_reader(
+            lidarname, mplfiledir=mpl_fn,
+            slicetup=slice(OVERLAPPROFSTART, OVERLAPPROFEND, 1)
+        )
 
-    # else:
-    #     lidarname, mpl_fn = 'mpl_S2S', '/home/tianli/SOLAR_EMA_project/codes/solaris_opcodes/product_calc/nrb_calc/testNRB_mpl_S2S.mpl'
-    #     mpldic = mpl_reader(
-    #         lidarname, mplfiledir=mpl_fn,
-    #         slicetup=slice(OVERLAPPROFSTART, OVERLAPPROFEND, 1)
-    #     )
+        ch1_tra = mpl_d['Channel #1 Data']
+        ch2_tra = mpl_d['Channel #2 Data']
 
-    #     ch1_aara = mpldic['Channel #1 Data']
-    #     ch2_aara = mpldic['Channel #2 Data']
+        ch_trm = mpl_d['Channel Data Mask']
+        bintime_ta = mpl_d['Bin Time']
+        binnum_ta = mpl_d['Number Data Bins']
 
-    #     ch_amask = mpldic['Channel Data Mask']
-    #     bintime_ara = mpldic['Bin Time']
-    #     binnum_ara = mpldic['Number Data Bins']
+        for i, binnum in enumerate(binnum_ta):
+            if i in []:
+                pass
+            else:
+                r_ta = np.cumsum(3e8*bintime_ta[i]/2/1000 * np.ones(binnum))
+                plt.plot(r_ta, ch1_tra[i][ch_trm[i]], color='C0')
+                plt.plot(r_ta, ch2_tra[i][ch_trm[i]], color='C1')
 
-    #     for i, binnum in enumerate(binnum_ara):
-    #         if i in []:
-    #             pass
-    #         else:
-    #             r_ara = np.cumsum(3e8*bintime_ara[i]/2/1000 * np.ones(binnum))
-    #             plt.plot(r_ara, ch1_aara[i][ch_amask[i]], color='C0')
-    #             plt.plot(r_ara, ch2_aara[i][ch_amask[i]], color='C1')
-
-    # plt.yscale('log')
-    # plt.show()
+    plt.yscale('log')
+    plt.show()
