@@ -47,7 +47,7 @@ def main(import_d, size2eind_func, size2sind_func):
     @verbose
     @announcer
     def reader_func(
-            datesdir=SOLARISMPLDIR,
+            datesdir=None,
             readerstartind=MPLREADERSTARTIND, readerendind=MPLREADERENDIND,
             mplfiledir=None,
             starttime=None, endtime=None,
