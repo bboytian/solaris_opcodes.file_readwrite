@@ -11,7 +11,10 @@ _headersize = 1
 
 
 # main func
-def main(filedir, starttime=None, endtime=None):
+def main(
+        filedir=None, text=None,
+        starttime=None, endtime=None
+):
     '''
     reads the webswitch log file which is derived from the webswitch browser
     interface; i.e. <webswitch url>/log.txt
@@ -20,6 +23,7 @@ def main(filedir, starttime=None, endtime=None):
 
     Parameters
     filedir (str): webswitch log file
+    text (str): html.text for the webswitch log url
     start/endtime (datetime like): approx start/end time of data of interest
                                    if not specified, it returns up till the start
                                    and end
@@ -30,12 +34,18 @@ def main(filedir, starttime=None, endtime=None):
             o1/2_ta (np.ndarray): switch on/off status, boolean
             s1/2_ta (np.ndarray): sensor reading
     '''
-    # reading file
-    with open(filedir, 'r') as webswitch_file:
-        lines_a = webswitch_file.readlines()
+    if filedir:        # reading file
+        with open(filedir, 'r') as webswitch_file:
+            lines_a = webswitch_file.readlines()
+    elif text:
+        lines_a = split('\n', text)
+    else:
+        raise ValueError('either filedir or text must be specified')
 
     # removing header
     lines_a = lines_a[_headersize:]
+    if lines_a == ['']:         # accounting for blank file
+        return {}
 
     # parsing lines
     lines_a = np.array((list(map(lambda x: split(',', x), lines_a))))
