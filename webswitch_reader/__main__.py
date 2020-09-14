@@ -57,7 +57,6 @@ def main(filedir, starttime=None, endtime=None):
     s2_ta = s2_ta.astype(np.float)
 
     # slicing according to start/end time specified
-    print(ts_ta)
     startind = 0
     endind = None
     if starttime:
