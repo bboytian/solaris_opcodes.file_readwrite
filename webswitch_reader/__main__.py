@@ -11,7 +11,7 @@ _headersize = 1
 
 
 # main func
-def main(filedir, startime=None, endtime=None):
+def main(filedir, starttime=None, endtime=None):
     '''
     reads the webswitch log file which is derived from the webswitch browser
     interface; i.e. <webswitch url>/log.txt
@@ -59,10 +59,10 @@ def main(filedir, startime=None, endtime=None):
     # slicing according to start/end time specified
     startind = 0
     endind = None
-    if startime:
-        startind = np.argmax(ts_ta >= startime)
+    if starttime:
+        starttind = np.argmax(ts_ta >= starttime)
     if endtime:
-        endind = np.argmax(ts_ta > endime)
+        endind = np.argmax(ts_ta > endtime)
     if endind == 0:
         endind = 0
 
