@@ -43,9 +43,8 @@ def main(
         raise ValueError('either filedir or text must be specified')
 
     # removing header
+    lines_a = list(filter(lambda x: x != '', lines_a))  # remove empty lines
     lines_a = lines_a[_headersize:]
-    if lines_a == ['']:         # accounting for blank file
-        return {}
 
     # parsing lines
     lines_a = np.array((list(map(lambda x: split(',', x), lines_a))))
