@@ -23,6 +23,7 @@ def main(filedir, startime=None, endtime=None):
     start/endtime (datetime like): approx start/end time of data of interest
                                    if not specified, it returns up till the start
                                    and end
+                                   has to be datetime aware
     Return
         webswitch_d (dict)
             ts_ta (np.ndarray)
@@ -54,6 +55,22 @@ def main(filedir, startime=None, endtime=None):
     s2_ta[s2_ta == 'xxx.x'] = np.nan
     s1_ta = s1_ta.astype(np.float)
     s2_ta = s2_ta.astype(np.float)
+
+    # slicing according to start/end time specified
+    startind = 0
+    endind = None
+    if startime:
+        startind = np.argmax(ts_ta >= startime)
+    if endtime:
+        endind = np.argmax(ts_ta > endime)
+    if endind == 0:
+        endind = 0
+
+    ts_ta = ts_ta[startind:endind]
+    o1_ta = o1_ta[startind:endind]
+    o2_ta = o2_ta[startind:endind]
+    s1_ta = s1_ta[startind:endind]
+    s2_ta = s2_ta[startind:endind]
 
     # returning
     webswitch_d = {
