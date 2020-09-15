@@ -9,6 +9,9 @@ from ...global_imports.solaris_opcodes import *
 # params
 _headersize = 1
 
+_startime = LOCTIMEFN('190001010000', UTCINFO)
+_endtime = LOCTIMEFN('250001010000', UTCINFO)
+
 
 # main func
 def main(
@@ -20,6 +23,9 @@ def main(
     interface; i.e. <webswitch url>/log.txt
 
     By default sensor 2 is humidity, sensor 1 is temperature
+
+    In the slicing of the ts_ta, we utilise _startime and _endtime as reference
+    times outside of whatever operating range.
 
     Parameters
     filedir (str): webswitch log file
@@ -70,6 +76,11 @@ def main(
     s2_ta = s2_ta.astype(np.float)
 
     # slicing according to start/end time specified
+    if not starttime:
+        starttime = _starttime
+    if not endtime:
+        endtime = _endtime
+
     windowboo_a = (ts_ta >= starttime) * (ts_ta > endtime)
     if windowboo_a.any():
         startind = np.argmax(windowboo_a)
