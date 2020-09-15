@@ -70,13 +70,12 @@ def main(
     s2_ta = s2_ta.astype(np.float)
 
     # slicing according to start/end time specified
-    startind = 0
-    endind = None
-    if starttime:
-        startind = np.argmax(ts_ta >= starttime)
-    if endtime:
-        endind = np.argmax(ts_ta > endtime)
-    if endind == 0:
+    windowboo_a = (ts_ta >= starttime) * (ts_ta > endtime)
+    if windowboo_a.any():
+        startind = np.argmax(windowboo_a)
+        endind = len(ts_ta) - np.argmax(np.flip(windowboo_a))
+    else:
+        startind = 0
         endind = 0
 
     ts_ta = ts_ta[startind:endind]
