@@ -43,7 +43,11 @@ def main(
         raise ValueError('either filedir or text must be specified')
 
     # removing header
-    lines_a = list(filter(lambda x: x != '', lines_a))  # remove empty lines
+    lines_a = list(filter(
+        lambda x: x != '' and 'xx/xx/xxxx xx:xx:xx' not in x,
+        lines_a
+    ))  # remove empty lines
+
     lines_a = lines_a[_headersize:]
 
     # parsing lines
