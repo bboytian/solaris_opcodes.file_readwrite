@@ -10,7 +10,7 @@ from ...global_imports.solaris_opcodes import *
 _headersize = 1
 
 _startime = LOCTIMEFN('190001010000', UTCINFO)
-_endtime = LOCTIMEFN('250001010000', UTCINFO)
+_endtime = LOCTIMEFN('226204110000', UTCINFO)
 
 
 # main func
