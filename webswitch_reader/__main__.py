@@ -48,61 +48,67 @@ def main(
     else:
         raise ValueError('either filedir or text must be specified')
 
-    # removing header
+    # removing invalid lines
     lines_a = list(filter(
         lambda x: x != '' and 'xx/xx/xxxx xx:xx:xx' not in x,
         lines_a
-    ))  # remove empty lines
+    ))
 
+    # removing header
     lines_a = lines_a[_headersize:]
 
-    # parsing lines
-    lines_a = np.array((list(map(lambda x: split(',', x), lines_a))))
-    ts_ta = lines_a[:, 0]
-    o1_ta = lines_a[:, 1]
-    o2_ta = lines_a[:, 2]
-    s1_ta = lines_a[:, 3]
-    s2_ta = lines_a[:, 4]
-
-    # converting string to data
-    ts_ta = LOCTIMEFN(ts_ta, utcinfo=UTCINFO)
-    o1_ta = o1_ta.astype(np.bool)
-    o2_ta = o2_ta.astype(np.bool)
-
-    ## replacing all the irrelevant strings with nan
-    s1_ta[s1_ta == 'xxx.x'] = np.nan
-    s2_ta[s2_ta == 'xxx.x'] = np.nan
-    s1_ta = s1_ta.astype(np.float)
-    s2_ta = s2_ta.astype(np.float)
-
-    # slicing according to start/end time specified
-    if not starttime:
-        starttime = _starttime
-    if not endtime:
-        endtime = _endtime
-
-    windowboo_a = (ts_ta >= starttime) * (ts_ta > endtime)
-    if windowboo_a.any():
-        startind = np.argmax(windowboo_a)
-        endind = len(ts_ta) - np.argmax(np.flip(windowboo_a))
+    # parsing log
+    if not lines_a:             # handling empty log
+        webswitch_d = {}
     else:
-        startind = 0
-        endind = 0
+        # parsing lines
+        lines_a = np.array((list(map(lambda x: split(',', x), lines_a))))
+        ts_ta = lines_a[:, 0]
+        o1_ta = lines_a[:, 1]
+        o2_ta = lines_a[:, 2]
+        s1_ta = lines_a[:, 3]
+        s2_ta = lines_a[:, 4]
 
-    ts_ta = ts_ta[startind:endind]
-    o1_ta = o1_ta[startind:endind]
-    o2_ta = o2_ta[startind:endind]
-    s1_ta = s1_ta[startind:endind]
-    s2_ta = s2_ta[startind:endind]
+        # converting string to data
+        ts_ta = LOCTIMEFN(ts_ta, utcinfo=UTCINFO)
+        o1_ta = o1_ta.astype(np.bool)
+        o2_ta = o2_ta.astype(np.bool)
 
-    # returning
-    webswitch_d = {
-        'ts_ta': ts_ta,
-        'o1_ta': o1_ta,
-        'o2_ta': o2_ta,
-        's1_ta': s1_ta,
-        's2_ta': s2_ta,
-    }
+        ## replacing all the irrelevant strings with nan
+        s1_ta[s1_ta == 'xxx.x'] = np.nan
+        s2_ta[s2_ta == 'xxx.x'] = np.nan
+        s1_ta = s1_ta.astype(np.float)
+        s2_ta = s2_ta.astype(np.float)
+
+        # slicing according to start/end time specified
+        if not starttime:
+            starttime = _starttime
+        if not endtime:
+            endtime = _endtime
+
+        windowboo_a = (ts_ta >= starttime) * (ts_ta > endtime)
+        if windowboo_a.any():
+            startind = np.argmax(windowboo_a)
+            endind = len(ts_ta) - np.argmax(np.flip(windowboo_a))
+        else:
+            startind = 0
+            endind = 0
+
+        ts_ta = ts_ta[startind:endind]
+        o1_ta = o1_ta[startind:endind]
+        o2_ta = o2_ta[startind:endind]
+        s1_ta = s1_ta[startind:endind]
+        s2_ta = s2_ta[startind:endind]
+
+        # returning
+        webswitch_d = {
+            'ts_ta': ts_ta,
+            'o1_ta': o1_ta,
+            'o2_ta': o2_ta,
+            's1_ta': s1_ta,
+            's2_ta': s2_ta,
+        }
+
     return webswitch_d
 
 
