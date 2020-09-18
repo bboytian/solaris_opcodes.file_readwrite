@@ -9,7 +9,7 @@ from ...global_imports.solaris_opcodes import *
 # params
 _headersize = 1
 
-_startime = LOCTIMEFN('190001010000', UTCINFO)
+_starttime = LOCTIMEFN('190001010000', UTCINFO)
 _endtime = LOCTIMEFN('226204110000', UTCINFO)
 
 
@@ -50,7 +50,7 @@ def main(
 
     # removing invalid lines
     lines_a = list(filter(
-        lambda x: x != '' and 'xx/xx/xxxx xx:xx:xx' not in x,
+        lambda x: x != '' and 'xx/xx/xxxx xx:xx:xx' not in x and x != '\n',
         lines_a
     ))
 
@@ -86,7 +86,7 @@ def main(
         if not endtime:
             endtime = _endtime
 
-        windowboo_a = (ts_ta >= starttime) * (ts_ta > endtime)
+        windowboo_a = (ts_ta >= starttime) * (ts_ta < endtime)
         if windowboo_a.any():
             startind = np.argmax(windowboo_a)
             endind = len(ts_ta) - np.argmax(np.flip(windowboo_a))
