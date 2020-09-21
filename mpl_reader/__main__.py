@@ -206,7 +206,7 @@ def main(import_d, size2eind_func, size2sind_func):
 
         ## concat scanpatterns together
         byteara_l = np.concatenate(byteara_l, axis=0)
-        del(cbyteara_l)
+        del cbyteara_l
         ## convert array of measurement bytes to dict
         ## channel arrays are flattened and need to be reshaped
         mpl_d = {
