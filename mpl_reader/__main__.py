@@ -6,6 +6,8 @@ import os
 import numpy as np
 import pandas as pd
 
+from .mpl_resampler import main as mpl_resampler
+from ..datajson_readwrite import datajson_write
 from ...global_imports.solaris_opcodes import *
 
 
@@ -24,9 +26,10 @@ def main(import_d, size2eind_func, size2sind_func):
     rangekey = import_d['range_key']
     maskkey = import_d['mask_key']
     Nbinkey = 'Number Bins'
-    firstbinkey = 'First data bin'  # This is the length of the range axis
+    firstbinkey = 'First data bin'
     bintimekey = 'Bin Time'
     energykey = 'Energy Monitor'
+
     bintimefactor = import_d['bintimefactor']
     energyfactor = import_d['energyfactor']
     headersize = import_d['headersize']
@@ -51,6 +54,7 @@ def main(import_d, size2eind_func, size2sind_func):
             readerstartind=MPLREADERSTARTIND, readerendind=MPLREADERENDIND,
             mplfiledir=None,
             starttime=None, endtime=None,
+            rstep=None,
             slicetup=None,
             filename=None,
     ):
@@ -90,13 +94,22 @@ def main(import_d, size2eind_func, size2sind_func):
                                            is None.
                                            leave endtime empty if we want latest
                                            must be timezone aware
+            rstep (int): if specified, resamples the data into larger bins rstep
+                         times larger than the original bin size. Any remainder
+                         bins are snipped off from the top
             slicetup (slice): slice tuple along time axis, only if mplfiledir
                               is specified
             filename (str): output will be a json file format, if specified
 
         Return
             mpldic (dict): dictionary of data in specified time frame.
-                           keys are listed in .mplfmt.py.
+                           keys are listed in .mplfmt.py. The added keys are:
+                               - Timestamp
+                               - Range
+                               - mask_key: 'Channel Data Mask'
+
+
+
                            dictionary is empty if the starttime is greater than
                            available files
         '''
@@ -241,8 +254,8 @@ def main(import_d, size2eind_func, size2sind_func):
         ### creating range array
         Delr_ta = SPEEDOFLIGHT * mpl_d[bintimekey]  # binsize
         mpl_d[rangekey] = Delr_ta[:, None] * np.arange(np.max(Nbin_ara))\
-            + Delr_ta[:, None]/2\
-            - (Delr_ta * firstbin_ara)[:, None]
+            - (Delr_ta * firstbin_ara)[:, None]\
+            # + Delr_ta[:, None]/2\
 
         ## trimming according to starttime and endtime
         mplkey_l = list(mpl_d.keys())
@@ -266,19 +279,15 @@ def main(import_d, size2eind_func, size2sind_func):
             mpl_d = {}
             print('no profiles found')
 
+        ## resampling; if specified
+        if rstep:
+            print(f'performing resampling with {rstep=}')
+            mpl_d = mpl_resampler(mpl_d, rstep)
+
 
         # writing to file
         if filename:
-            # jsonify arrays
-            mpljson = {
-                key: mpl_d[key].tolist()
-                for key in mplkey_l
-            }
-            ## treating timestamp array differently
-            mpljson[timekey] = (mpl_d[timekey].astype(np.str)).tolist()
-
-            with open(filename, 'w') as jsonfile:
-                jsonfile.write(json.dumps(mpljson))
+            datajson_write(mpl_d, filename)
 
         # returning
         return mpl_d
@@ -298,13 +307,15 @@ if __name__ == '__main__':
     from .smmpl_fmt import size2eind_func, size2sind_func
     smmpl_reader = main(import_dic, size2eind_func, size2sind_func)
 
-    testsmmpl_boo = False
+    testsmmpl_boo = True
     if testsmmpl_boo:
 
-        starttime = LOCTIMEFN('202007150000', UTCINFO)
-        endtime = LOCTIMEFN('202007160000', UTCINFO)
+        starttime = LOCTIMEFN('202009140000', UTCINFO)
+        endtime = LOCTIMEFN('202009140200', UTCINFO)
         mpl_d = smmpl_reader(
+            datesdir=SOLARISMPLDIR.format('smmpl_E2'),
             starttime=starttime, endtime=endtime,
+            rstep=3
         )
 
         ch1_tra = mpl_d['Channel #1 Data']
@@ -312,12 +323,12 @@ if __name__ == '__main__':
         ch_trm = mpl_d['Channel Data Mask']
         bintime_ta = mpl_d['Bin Time']
         binnum_ta = mpl_d['Number Bins']
+        r_tra = mpl_d['Range']
 
         counter = 0
         for i, binnum in enumerate(binnum_ta):
-            r_ta = np.cumsum(3e8*bintime_ta[i] * np.ones(binnum))
-            plt.plot(r_ta, ch1_tra[i][ch_trm[i]], color='C0')
-            plt.plot(r_ta, ch2_tra[i][ch_trm[i]], color='C1')
+            plt.plot(r_tra[i][ch_trm[i]], ch1_tra[i][ch_trm[i]], color='C0')
+            plt.plot(r_tra[i][ch_trm[i]], ch2_tra[i][ch_trm[i]], color='C1')
             counter += 1
             if counter > 100:
                 break
@@ -331,18 +342,17 @@ if __name__ == '__main__':
 
         ch1_tra = mpl_d['Channel #1 Data']
         ch2_tra = mpl_d['Channel #2 Data']
-
         ch_trm = mpl_d['Channel Data Mask']
         bintime_ta = mpl_d['Bin Time']
         binnum_ta = mpl_d['Number Data Bins']
+        r_tra = mpl_d['Range']
 
         for i, binnum in enumerate(binnum_ta):
             if i in []:
                 pass
             else:
-                r_ta = np.cumsum(3e8*bintime_ta[i]/2/1000 * np.ones(binnum))
-                plt.plot(r_ta, ch1_tra[i][ch_trm[i]], color='C0')
-                plt.plot(r_ta, ch2_tra[i][ch_trm[i]], color='C1')
+                plt.plot(r_tra[i][ch_trm[i]], ch1_tra[i][ch_trm[i]], color='C0')
+                plt.plot(r_tra[i][ch_trm[i]], ch2_tra[i][ch_trm[i]], color='C1')
 
     plt.yscale('log')
     plt.show()
