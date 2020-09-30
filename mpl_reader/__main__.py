@@ -6,7 +6,6 @@ import os
 import numpy as np
 import pandas as pd
 
-from .mpl_resampler import main as mpl_resampler
 from ..datajson_readwrite import datajson_write
 from ...global_imports.solaris_opcodes import *
 
@@ -54,7 +53,6 @@ def main(import_d, size2eind_func, size2sind_func):
             readerstartind=MPLREADERSTARTIND, readerendind=MPLREADERENDIND,
             mplfiledir=None,
             starttime=None, endtime=None,
-            rstep=None,
             slicetup=None,
             filename=None,
     ):
@@ -94,9 +92,6 @@ def main(import_d, size2eind_func, size2sind_func):
                                            is None.
                                            leave endtime empty if we want latest
                                            must be timezone aware
-            rstep (int): if specified, resamples the data into larger bins rstep
-                         times larger than the original bin size. Any remainder
-                         bins are snipped off from the top
             slicetup (slice): slice tuple along time axis, only if mplfiledir
                               is specified
             filename (str): output will be a json file format, if specified
@@ -278,12 +273,6 @@ def main(import_d, size2eind_func, size2sind_func):
         else:
             mpl_d = {}
             print('no profiles found')
-
-        ## resampling; if specified
-        if rstep:
-            print(f'performing resampling with {rstep=}')
-            mpl_d = mpl_resampler(mpl_d, rstep)
-
 
         # writing to file
         if filename:
