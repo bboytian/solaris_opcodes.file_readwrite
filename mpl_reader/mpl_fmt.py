@@ -17,7 +17,7 @@ def size2eind_func(bytesizedic):
 def size2sind_func(sinddic):
     '''
     converts bytesizedic to byteinddic. start index of each data key
-    '''    
+    '''
     vals, keys = list(sinddic.values()), list(sinddic.keys())
     vals.pop()
     vals.insert(0, 0)
@@ -217,8 +217,9 @@ bytesind_dic = size2sind_func(byteeind_dic)
 # for import
 import_dic = {
     'time_key':'Timestamp',
-    'range_key':'Range',    
+    'range_key':'Range',
     'mask_key':'Channel Data Mask',
+    'pad_key':'Pad',
     'headersize':163,
     'bintimefactor':0.5,
     'energyfactor':1e-3,

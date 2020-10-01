@@ -76,7 +76,7 @@ wanted_keylst = [
     'Background Average 2',
     'Background Std Dev 2',
     'McsMode',
-    'First data bin',           # noted to be zero, mught be redundant
+    'First data bin',           # noted to be zero, might be redundant
     'System Type',
     'Sync Pulses Seen Per Second',  # for performance, this values changes
     'First Background Bin',
@@ -220,6 +220,7 @@ import_dic = {
     'time_key':'Timestamp',
     'range_key':'Range',
     'mask_key':'Channel Data Mask',
+    'pad_key':'Pad',
     'headersize':163,
     'bintimefactor':0.5,
     'energyfactor':1e-3,

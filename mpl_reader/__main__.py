@@ -24,6 +24,7 @@ def main(import_d, size2eind_func, size2sind_func):
     timekey = import_d['time_key']
     rangekey = import_d['range_key']
     maskkey = import_d['mask_key']
+    padkey = import_d['pad_key']
     Nbinkey = 'Number Bins'
     firstbinkey = 'First data bin'
     bintimekey = 'Bin Time'
@@ -186,9 +187,10 @@ def main(import_d, size2eind_func, size2sind_func):
         ## extending measurement to form rectangle block
         cbyteara_l = deepcopy(byteara_l)
         byteara_l = []
+        pad_a = np.array([], dtype=np.int)
         for i, Nbin in enumerate(Nbin_l):
             byteara = cbyteara_l[i]
-            # reshape into rectangle
+            # reshape into rectangle for time axis
             bytesize = headersize + Nbin * len(channelkey_l) * channelbytenum
             bytearalen = len(byteara)
             numara = bytearalen//bytesize
@@ -198,8 +200,10 @@ def main(import_d, size2eind_func, size2sind_func):
                 byteara = byteara[:exind]  # trim incomplete mea
             byteara = byteara.reshape(numara, bytesize)
             # extending rectangle
+            pad = maxNbin - Nbin
+            pad_a = np.append(pad_a, [pad]*numara)
             append_a = np.zeros((
-                numara, (maxNbin - Nbin) * channelbytenum
+                numara, pad * channelbytenum
             ), dtype=np.byte)
             cheind_a = headersize + np.cumsum(
                 np.arange(len(channelkey_l)) * channelbytenum * Nbin
@@ -237,20 +241,24 @@ def main(import_d, size2eind_func, size2sind_func):
         mpl_d[timekey] = timeara
 
         ## treating channels differently;
-        ### reshape arrays into measurements
+        ### reshape arrays into measurements, removing as much padding as possible
+        firstbin_ara = mpl_d[firstbinkey]  # effectively Ndatabin_ara-Nbin_ara
+        pad_a += firstbin_ara
+        removepadnum = pad_a.min()
+        pad_a -= removepadnum
+        mpl_d[padkey] = pad_a
         for key in channelkey_l:
             chara = mpl_d[key]
-            mpl_d[key] = chara.reshape(len(chara)//maxNbin, maxNbin)
-        ### creating mask to accomodate different range bins and appended bins
-        Nbin_ara = mpl_d[Nbinkey]
-        firstbin_ara = mpl_d[firstbinkey]  # effectively Ndatabin_ara-Nbin_ara
-        mpl_d[maskkey] = (np.arange(maxNbin) >= firstbin_ara[:, None]) *\
-            ~(np.arange(maxNbin) > Nbin_ara[:, None])
+            mpl_d[key] = chara.reshape(
+                len(chara)//maxNbin, maxNbin
+            )[:, removepadnum:]
+        ### creating mask to accomodate padding
+        newmaxNbin = mpl_d[key].shape[-1]
+        mpl_d[maskkey] = np.arange(newmaxNbin) >= pad_a[:, None]
         ### creating range array
         Delr_ta = SPEEDOFLIGHT * mpl_d[bintimekey]  # binsize
-        mpl_d[rangekey] = Delr_ta[:, None] * np.arange(np.max(Nbin_ara))\
-            - (Delr_ta * firstbin_ara)[:, None]\
-            # + Delr_ta[:, None]/2\
+        mpl_d[rangekey] = Delr_ta[:, None] * np.arange(newmaxNbin)\
+            - (Delr_ta * pad_a)[:, None]
 
         ## trimming according to starttime and endtime
         mplkey_l = list(mpl_d.keys())
@@ -296,15 +304,14 @@ if __name__ == '__main__':
     from .smmpl_fmt import size2eind_func, size2sind_func
     smmpl_reader = main(import_dic, size2eind_func, size2sind_func)
 
-    testsmmpl_boo = True
+    testsmmpl_boo = False
     if testsmmpl_boo:
 
-        starttime = LOCTIMEFN('202009140000', UTCINFO)
-        endtime = LOCTIMEFN('202009140200', UTCINFO)
+        starttime = LOCTIMEFN('202009290000', UTCINFO)
+        endtime = LOCTIMEFN('202009290500', UTCINFO)
         mpl_d = smmpl_reader(
             datesdir=SOLARISMPLDIR.format('smmpl_E2'),
             starttime=starttime, endtime=endtime,
-            rstep=3
         )
 
         ch1_tra = mpl_d['Channel #1 Data']
