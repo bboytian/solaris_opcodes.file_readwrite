@@ -264,7 +264,11 @@ def main(import_d, size2eind_func, size2sind_func):
         mplkey_l = list(mpl_d.keys())
         if starttime:
             # trimming can still take place even when reading single file
-            startind = np.argmax(timeara >= starttime)
+            startboo_a = timeara >= starttime
+            if startboo_a.any():
+                startind = np.argmax(startboo_a)
+            else:
+                startind = len(timeara)
             if endtime:
                 endind = np.argmax(timeara > endtime)
                 if not endind:
@@ -304,51 +308,67 @@ if __name__ == '__main__':
     from .smmpl_fmt import size2eind_func, size2sind_func
     smmpl_reader = main(import_dic, size2eind_func, size2sind_func)
 
-    testsmmpl_boo = False
-    if testsmmpl_boo:
 
-        starttime = LOCTIMEFN('202009290000', UTCINFO)
-        endtime = LOCTIMEFN('202009290500', UTCINFO)
-        mpl_d = smmpl_reader(
-            datesdir=SOLARISMPLDIR.format('smmpl_E2'),
-            starttime=starttime, endtime=endtime,
-        )
+    # test block 1
 
-        ch1_tra = mpl_d['Channel #1 Data']
-        ch2_tra = mpl_d['Channel #2 Data']
-        ch_trm = mpl_d['Channel Data Mask']
-        bintime_ta = mpl_d['Bin Time']
-        binnum_ta = mpl_d['Number Bins']
-        r_tra = mpl_d['Range']
+    # starttime = LOCTIMEFN('202009290000', UTCINFO)
+    # endtime = LOCTIMEFN('202009290500', UTCINFO)
+    # mpl_d = smmpl_reader(
+    #     datesdir=SOLARISMPLDIR.format('smmpl_E2'),
+    #     starttime=starttime, endtime=endtime,
+    # )
 
-        counter = 0
-        for i, binnum in enumerate(binnum_ta):
-            plt.plot(r_tra[i][ch_trm[i]], ch1_tra[i][ch_trm[i]], color='C0')
-            plt.plot(r_tra[i][ch_trm[i]], ch2_tra[i][ch_trm[i]], color='C1')
-            counter += 1
-            if counter > 100:
-                break
+    # ch1_tra = mpl_d['Channel #1 Data']
+    # ch2_tra = mpl_d['Channel #2 Data']
+    # ch_trm = mpl_d['Channel Data Mask']
+    # bintime_ta = mpl_d['Bin Time']
+    # binnum_ta = mpl_d['Number Bins']
+    # r_tra = mpl_d['Range']
 
-    else:
-        mpl_fn = '/home/tianli/SOLAR_EMA_project/codes/solaris_opcodes/product_calc/nrb_calc/testNRB_mpl_S2S.mpl'
-        mpl_d = mpl_reader(
-            mplfiledir=mpl_fn,
-            slicetup=slice(OVERLAPPROFSTART, OVERLAPPROFEND, 1)
-        )
+    # counter = 0
+    # for i, binnum in enumerate(binnum_ta):
+    #     plt.plot(r_tra[i][ch_trm[i]], ch1_tra[i][ch_trm[i]], color='C0')
+    #     plt.plot(r_tra[i][ch_trm[i]], ch2_tra[i][ch_trm[i]], color='C1')
+    #     counter += 1
+    #     if counter > 100:
+    #         break
+    # plt.yscale('log')
+    # plt.show()
 
-        ch1_tra = mpl_d['Channel #1 Data']
-        ch2_tra = mpl_d['Channel #2 Data']
-        ch_trm = mpl_d['Channel Data Mask']
-        bintime_ta = mpl_d['Bin Time']
-        binnum_ta = mpl_d['Number Data Bins']
-        r_tra = mpl_d['Range']
 
-        for i, binnum in enumerate(binnum_ta):
-            if i in []:
-                pass
-            else:
-                plt.plot(r_tra[i][ch_trm[i]], ch1_tra[i][ch_trm[i]], color='C0')
-                plt.plot(r_tra[i][ch_trm[i]], ch2_tra[i][ch_trm[i]], color='C1')
+    # test block 2
 
-    plt.yscale('log')
-    plt.show()
+    # mpl_fn = '/home/tianli/SOLAR_EMA_project/codes/solaris_opcodes/product_calc/nrb_calc/testNRB_mpl_S2S.mpl'
+    # mpl_d = mpl_reader(
+    #     mplfiledir=mpl_fn,
+    #     slicetup=slice(OVERLAPPROFSTART, OVERLAPPROFEND, 1)
+    # )
+
+    # ch1_tra = mpl_d['Channel #1 Data']
+    # ch2_tra = mpl_d['Channel #2 Data']
+    # ch_trm = mpl_d['Channel Data Mask']
+    # bintime_ta = mpl_d['Bin Time']
+    # binnum_ta = mpl_d['Number Data Bins']
+    # r_tra = mpl_d['Range']
+
+    # for i, binnum in enumerate(binnum_ta):
+    #     if i in []:
+    #         pass
+    #     else:
+    #         plt.plot(r_tra[i][ch_trm[i]], ch1_tra[i][ch_trm[i]], color='C0')
+    #         plt.plot(r_tra[i][ch_trm[i]], ch2_tra[i][ch_trm[i]], color='C1')
+    # plt.yscale('log')
+    # plt.show()
+
+
+    # test block 3
+    starttime = LOCTIMEFN('202011260030', 0)
+    endtime = LOCTIMEFN('202011260100', 0)
+    mpl_d = smmpl_reader(
+        datesdir=SOLARISMPLDIR.format('smmpl_E2'),
+        starttime=starttime, endtime=endtime,
+    )
+
+    ts_ta = mpl_d['Timestamp']
+    print(ts_ta[0])
+    print(ts_ta[-1])
