@@ -10,6 +10,10 @@ from ..datajson_readwrite import datajson_write
 from ...global_imports.solaris_opcodes import *
 
 
+# params
+_utcinfo = 0                    # default utcinfo of all lidar data
+
+
 # reader_funcfunc
 def main(import_d, size2eind_func, size2sind_func):
     '''
@@ -127,7 +131,7 @@ def main(import_d, size2eind_func, size2sind_func):
                     lambda x: x[0] == '2',
                     os.listdir(datesdir)
                 )))
-            dates = LOCTIMEFN(dates, UTCINFO)
+            dates = LOCTIMEFN(dates, _utcinfo)
             dates.sort()
             ## choosing relevant date folders
             starttimeboo_a = dates > starttime
@@ -237,7 +241,7 @@ def main(import_d, size2eind_func, size2sind_func):
         ## converting time to datetime like object
         time_d = {key: mpl_d[key] for key in timekey_l}
         timeara = pd.to_datetime(pd.DataFrame(time_d)).to_numpy('datetime64[s]')
-        timeara = LOCTIMEFN(timeara, UTCINFO)
+        timeara = LOCTIMEFN(timeara, _utcinfo)
         mpl_d[timekey] = timeara
 
         ## treating channels differently;
@@ -311,8 +315,8 @@ if __name__ == '__main__':
 
     # test block 1
 
-    # starttime = LOCTIMEFN('202009290000', UTCINFO)
-    # endtime = LOCTIMEFN('202009290500', UTCINFO)
+    # starttime = LOCTIMEFN('202009290000', 0)
+    # endtime = LOCTIMEFN('202009290500', 0)
     # mpl_d = smmpl_reader(
     #     datesdir=SOLARISMPLDIR.format('smmpl_E2'),
     #     starttime=starttime, endtime=endtime,
