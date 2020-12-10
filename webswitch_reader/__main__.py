@@ -9,14 +9,15 @@ from ...global_imports.solaris_opcodes import *
 # params
 _headersize = 1
 
-_starttime = LOCTIMEFN('190001010000', UTCINFO)
-_endtime = LOCTIMEFN('226204110000', UTCINFO)
+_starttime = LOCTIMEFN('190001010000', 0)
+_endtime = LOCTIMEFN('226204110000', 0)
 
 
 # main func
 def main(
         filedir=None, text=None,
-        starttime=None, endtime=None
+        starttime=None, endtime=None,
+        utcinfo=0,
 ):
     '''
     reads the webswitch log file which is derived from the webswitch browser
@@ -34,6 +35,9 @@ def main(
                                    if not specified, it returns up till the start
                                    and end
                                    has to be datetime aware
+    utcinfo (int): utc offset of the returned timestamp array
+
+
     Return
         webswitch_d (dict)
             ts_ta (np.ndarray)
@@ -70,7 +74,7 @@ def main(
         s2_ta = lines_a[:, 4]
 
         # converting string to data
-        ts_ta = LOCTIMEFN(ts_ta, utcinfo=UTCINFO)
+        ts_ta = LOCTIMEFN(ts_ta, utcinfo=utcinfo)
         o1_ta = o1_ta.astype(np.bool)
         o2_ta = o2_ta.astype(np.bool)
 
@@ -117,8 +121,16 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
     webswitch_d = main(
-        '/home/tianli/SOLAR_EMA_project/data/smmpl_E2/20200914/202009141035_webswitchlog.txt'
+        '/home/tianli/SOLAR_EMA_project/data/smmpl_E2/20201210/20201210_webswitchlog.txt',
+        starttime=LOCTIMEFN('20201209', 0),
+        endtime=None,
+        utcinfo=0,
     )
 
-    print(webswitch_d['o2_ta'])
-    print(webswitch_d['s2_ta'])
+    # print(webswitch_d['o2_ta'])
+    # print(webswitch_d['s2_ta'])
+
+    plt.plot(webswitch_d['ts_ta'], webswitch_d['s1_ta'])
+    plt.plot(webswitch_d['ts_ta'], webswitch_d['s2_ta'])
+
+    plt.show()
