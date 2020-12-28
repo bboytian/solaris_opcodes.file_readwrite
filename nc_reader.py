@@ -119,7 +119,6 @@ def main(data_dir, refreshjson_boo=False):
 
 
 if __name__ == '__main__':
-
     import os.path as osp
 
     datadate = '20200304'

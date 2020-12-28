@@ -121,7 +121,8 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
     webswitch_d = main(
-        '/home/tianli/SOLAR_EMA_project/data/smmpl_E2/20201210/20201210_webswitchlog.txt',
+        # '/home/tianli/SOLAR_EMA_project/data/smmpl_E2/20201210/20201210_webswitchlog.txt',
+        '/home/tianli/SOLAR_EMA_project/data/smmpl_E2/20201211/20201211_webswitchlog.txt',
         starttime=LOCTIMEFN('20201209', 0),
         endtime=None,
         utcinfo=0,
